@@ -5,7 +5,6 @@ BUILD_BIN = $(BUILD)/bin
 
 INCLUDE = include
 KERNEL = kernel
-KERNEL_BOOT = $(KERNEL)/boot
 TOOLS = tools
 
 OBJS = \
@@ -36,7 +35,7 @@ OBJS = \
 	$(BUILD_KERNEL)/trap.o\
 	$(BUILD_KERNEL)/uart.o\
 	$(BUILD_KERNEL)/vectors.o\
-	$(BUILD_KERNEL)/vm.o\
+	$(BUILD_KERNEL)/vm.o
 
 # Cross-compiling (e.g., on Mac OS X)
 # TOOLPREFIX = i386-jos-elf
@@ -89,7 +88,7 @@ OBJDUMP = $(TOOLPREFIX)objdump
 CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer
 CFLAGS += -Iinclude
 CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
-ASFLAGS = -m32 -gdwarf-2 -Wa,-divide
+ASFLAGS = -m32 -gdwarf-2 -Wa,-divide -Iinclude 
 # FreeBSD ld wants ``elf_i386_fbsd''
 LDFLAGS += -m $(shell $(LD) -V | grep elf_i386 2>/dev/null | head -n 1)
 
@@ -104,37 +103,49 @@ endif
 xv6.img: $(BUILD_KERNEL)/bootblock $(BUILD_KERNEL)/kernel
 	dd if=/dev/zero of=$@ count=10000
 	dd if=$< of=$@ conv=notrunc
-	dd if=$(BUILD)/kernel of=$@ seek=1 conv=notrunc
+	dd if=$(BUILD_KERNEL)/kernel of=$@ seek=1 conv=notrunc
 
 xv6memfs.img: bootblock kernelmemfs
 	dd if=/dev/zero of=xv6memfs.img count=10000
 	dd if=bootblock of=xv6memfs.img conv=notrunc
 	dd if=kernelmemfs of=xv6memfs.img seek=1 conv=notrunc
+	
+$(BUILD_KERNEL)/%.o: $(KERNEL)/%.c
+	@mkdir -p build/kernel
+	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(BUILD)/bootblock: $(BOOT)/bootasm.S $(BOOT)/bootmain.c
-	$(CC) $(CFLAGS) -fno-pic -O -nostdinc -I. -c $(BOOT)/bootmain.c
-	$(CC) $(CFLAGS) -fno-pic -nostdinc -I. -c $(BOOT)/bootasm.S
-	$(LD) $(LDFLAGS) -N -e start -Ttext 0x7C00 -o bootblock.o bootasm.o bootmain.o
-	$(OBJDUMP) -S bootblock.o > bootblock.asm
-	$(OBJCOPY) -S -O binary -j .text bootblock.o bootblock
-	./sign.pl bootblock
+$(BUILD_KERNEL)/%.o: $(KERNEL)/%.S
+	@mkdir -p build/kernel
+	$(CC) $(ASFLAGS) -c -o $@ $<
 
-entryother: entryother.S
-	$(CC) $(CFLAGS) -fno-pic -nostdinc -I. -c entryother.S
-	$(LD) $(LDFLAGS) -N -e start -Ttext 0x7000 -o bootblockother.o entryother.o
-	$(OBJCOPY) -S -O binary -j .text bootblockother.o entryother
-	$(OBJDUMP) -S bootblockother.o > entryother.asm
+$(KERNEL)/vectors.S: $(TOOLS)/vectors.pl
+	perl $(TOOLS)/vectors.pl > $(KERNEL)/vectors.S
 
-initcode: initcode.S
-	$(CC) $(CFLAGS) -nostdinc -I. -c initcode.S
-	$(LD) $(LDFLAGS) -N -e start -Ttext 0 -o initcode.out initcode.o
-	$(OBJCOPY) -S -O binary initcode.out initcode
-	$(OBJDUMP) -S initcode.o > initcode.asm
 
-kernel: $(OBJS) entry.o entryother initcode kernel.ld
-	$(LD) $(LDFLAGS) -T kernel.ld -o kernel entry.o $(OBJS) -b binary initcode entryother
-	$(OBJDUMP) -S kernel > kernel.asm
-	$(OBJDUMP) -t kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > kernel.sym
+$(BUILD_KERNEL)/bootblock: $(KERNEL)/bootasm.S $(KERNEL)/bootmain.c
+	$(CC) $(CFLAGS) -fno-pic -O -nostdinc -I. -o $(BUILD_KERNEL)/bootmain.o -c $(KERNEL)/bootmain.c
+	$(CC) $(CFLAGS) -fno-pic -nostdinc -I. -o $(BUILD_KERNEL)/bootasm.o -c $(KERNEL)/bootasm.S
+	$(LD) $(LDFLAGS) -N -e start -Ttext 0x7C00 -o $(BUILD_KERNEL)/bootblock.o $(BUILD_KERNEL)/bootasm.o $(BUILD_KERNEL)/bootmain.o
+	$(OBJDUMP) -S $(BUILD_KERNEL)/bootblock.o > $(BUILD_KERNEL)/bootblock.asm
+	$(OBJCOPY) -S -O binary -j .text $(BUILD_KERNEL)/bootblock.o $(BUILD_KERNEL)/bootblock
+	./tools/sign.pl $(BUILD_KERNEL)/bootblock
+
+$(BUILD_KERNEL)/entryother: $(KERNEL)/entryother.S
+	$(CC) $(CFLAGS) -fno-pic -nostdinc -I. -o $(BUILD_KERNEL)/entryother.o -c $(KERNEL)/entryother.S
+	$(LD) $(LDFLAGS) -N -e start -Ttext 0x7000 -o $(BUILD_KERNEL)/bootblockother.o $(BUILD_KERNEL)/entryother.o
+	$(OBJCOPY) -S -O binary -j .text $(BUILD_KERNEL)/bootblockother.o $(BUILD_KERNEL)/entryother
+	$(OBJDUMP) -S $(BUILD_KERNEL)/bootblockother.o > $(BUILD_KERNEL)/entryother.asm
+
+$(BUILD_KERNEL)/initcode: $(KERNEL)/initcode.S
+	$(CC) $(CFLAGS) -nostdinc -I. -o $(BUILD_KERNEL)/initcode.o -c $(KERNEL)/initcode.S
+	$(LD) $(LDFLAGS) -N -e start -Ttext 0 -o $(BUILD_KERNEL)/initcode.out $(BUILD_KERNEL)/initcode.o
+	$(OBJCOPY) -S -O binary $(BUILD_KERNEL)/initcode.out $(BUILD_KERNEL)/initcode
+	$(OBJDUMP) -S $(BUILD_KERNEL)/initcode.o > $(BUILD_KERNEL)/initcode.asm
+
+$(BUILD_KERNEL)/kernel: $(OBJS) $(BUILD_KERNEL)/entry.o $(BUILD_KERNEL)/entryother $(BUILD_KERNEL)/initcode $(KERNEL)/kernel.ld
+	$(LD) $(LDFLAGS) -T $(KERNEL)/kernel.ld -o $(BUILD_KERNEL)/kernel $(BUILD_KERNEL)/entry.o $(OBJS)  -b binary build/kernel/initcode build/kernel/entryother
+	$(OBJDUMP) -S $(BUILD_KERNEL)/kernel > $(BUILD_KERNEL)/kernel.asm
+	$(OBJDUMP) -t $(BUILD_KERNEL)/kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $(BUILD_KERNEL)/kernel.sym
 
 # kernelmemfs is a copy of kernel that maintains the
 # disk image in memory instead of writing to a disk.
@@ -193,8 +204,8 @@ UPROGS=\
 	_wc\
 	_zombie\
 
-fs.img: mkfs README $(UPROGS)
-	./mkfs fs.img README $(UPROGS)
+fs.img: $(BUILD)/mkfs README.org #$(UPROGS)
+	./$(BUILD)/mkfs fs.img README.org #$(UPROGS)
 
 -include *.d
 

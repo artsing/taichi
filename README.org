@@ -1,7 +1,7 @@
 * pangu
     unix-link opration system
     
-    run with qemu-nox
-    #+BEGIN_QUOTE
-        make qemu-nox
-    #+END_QUOTE
+** run
+#+BEGIN_QUOTE
+make qemu-nox
+#+END_QUOTE

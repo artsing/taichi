@@ -1,7 +1,7 @@
 * pangu
-    unix-link operating system based on xv6.
+    unix-link operating system based on xv6 .
     
 ** run
 #+BEGIN_QUOTE
-make qemu-nox
+    make
 #+END_QUOTE

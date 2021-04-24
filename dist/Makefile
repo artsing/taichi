@@ -179,7 +179,7 @@ $(BUILD)/mkfs: $(TOOLS)/mkfs.c $(INCLUDE)/fs.h
 # that disk image changes after first build are persistent until clean.  More
 # details:
 # http://www.gnu.org/software/make/manual/html_node/Chained-Rules.html
-.PRECIOUS: $(BUILD_BIN)/%.o
+.PRECIOUS: %.o
 
 UPROGS=\
 	_cat\
@@ -241,4 +241,3 @@ qemu-nox-gdb: $(BUILD)/fs.img $(BUILD)/xv6.img .gdbinit
 	@echo "*** Now run 'gdb'." 1>&2
 	$(QEMU) -nographic $(QEMUOPTS) -S $(QEMUGDB)
 
-.PHONY: clean

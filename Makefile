@@ -3,7 +3,7 @@ BUILD_KERNEL = $(BUILD)/kernel
 BUILD_LIB = $(BUILD)/lib
 BUILD_BIN = $(BUILD)/bin
 
-BIN = bin 
+BIN = bin
 LIB = lib
 KERNEL = kernel
 TOOLS = tools
@@ -77,12 +77,16 @@ ifneq ($(shell $(CC) -dumpspecs 2>/dev/null | grep -e '[^f]nopie'),)
 CFLAGS += -fno-pie -nopie
 endif
 
+all: $(BUILD)/xv6.img $(BUILD)/fs.img
+
 $(BUILD)/xv6.img: $(BUILD_KERNEL)/bootblock $(BUILD_KERNEL)/kernel
+	@mkdir -p build build/kernel
 	dd if=/dev/zero of=$@ count=10000
 	dd if=$< of=$@ conv=notrunc
 	dd if=$(BUILD_KERNEL)/kernel of=$@ seek=1 conv=notrunc
 
 $(BUILD)/xv6memfs.img: $(BUILD_KERNEL)/bootblock $(BUILD_KERNEL)/kernelmemfs
+	@mkdir -p build build/kernel
 	dd if=/dev/zero of=$(BUILD)/xv6memfs.img count=10000
 	dd if=$(BUILD_KERNEL)/bootblock of=$(BUILD)/xv6memfs.img conv=notrunc
 	dd if=$(BUILD_KERNEL)/kernelmemfs of=$(BUILD)/xv6memfs.img seek=1 conv=notrunc
@@ -96,21 +100,13 @@ $(BUILD_KERNEL)/%.o: $(KERNEL)/%.S
 	$(CC) $(ASFLAGS) -c -o $@ $<
 
 # userspace object files
-build/bin/init.o: bin/init.c
+$(BUILD_BIN)/%.o: $(BIN)/%.c
+	@mkdir -p build build/bin
 	$(CC) $(CFLAGS) -c -o $@ $<
-
-build/bin/sh.o: bin/sh.c
-	$(CC) $(CFLAGS) -c -o $@ $<
-
-$(BUILD_LIB)/%.o: $(LIB)/%.c
-	$(CC) $(CFLAGS) -c -o $@ $<
-
-$(BUILD_LIB)/%.o: $(LIB)/%.S
-	$(CC) $(ASFLAGS) -c -o $@ $<
-
 
 
 $(BUILD_KERNEL)/bootblock: $(KERNEL)/bootasm.S $(KERNEL)/bootmain.c
+	@mkdir -p build/kernel
 	$(CC) $(CFLAGS) -fno-pic -O -nostdinc -I. -o $(BUILD_KERNEL)/bootmain.o -c $(KERNEL)/bootmain.c
 	$(CC) $(CFLAGS) -fno-pic -nostdinc -I. -o $(BUILD_KERNEL)/bootasm.o -c $(KERNEL)/bootasm.S
 	$(LD) $(LDFLAGS) -N -e start -Ttext 0x7C00 -o $(BUILD_KERNEL)/bootblock.o $(BUILD_KERNEL)/bootasm.o $(BUILD_KERNEL)/bootmain.o
@@ -119,18 +115,21 @@ $(BUILD_KERNEL)/bootblock: $(KERNEL)/bootasm.S $(KERNEL)/bootmain.c
 	./tools/sign.pl $(BUILD_KERNEL)/bootblock
 
 $(BUILD_KERNEL)/entryother: $(KERNEL)/entryother.S
+	@mkdir -p build/kernel
 	$(CC) $(CFLAGS) -fno-pic -nostdinc -I. -o $(BUILD_KERNEL)/entryother.o -c $(KERNEL)/entryother.S
 	$(LD) $(LDFLAGS) -N -e start -Ttext 0x7000 -o $(BUILD_KERNEL)/bootblockother.o $(BUILD_KERNEL)/entryother.o
 	$(OBJCOPY) -S -O binary -j .text $(BUILD_KERNEL)/bootblockother.o $(BUILD_KERNEL)/entryother
 	$(OBJDUMP) -S $(BUILD_KERNEL)/bootblockother.o > $(BUILD_KERNEL)/entryother.asm
 
 $(BUILD_KERNEL)/initcode: $(KERNEL)/initcode.S
+	@mkdir -p build/kernel
 	$(CC) $(CFLAGS) -nostdinc -I. -o $(BUILD_KERNEL)/initcode.o -c $(KERNEL)/initcode.S
 	$(LD) $(LDFLAGS) -N -e start -Ttext 0 -o $(BUILD_KERNEL)/initcode.out $(BUILD_KERNEL)/initcode.o
 	$(OBJCOPY) -S -O binary $(BUILD_KERNEL)/initcode.out $(BUILD_KERNEL)/initcode
 	$(OBJDUMP) -S $(BUILD_KERNEL)/initcode.o > $(BUILD_KERNEL)/initcode.asm
 
 $(BUILD_KERNEL)/kernel: $(OBJS) $(BUILD_KERNEL)/entry.o $(BUILD_KERNEL)/entryother $(BUILD_KERNEL)/initcode $(KERNEL)/kernel.ld
+	@mkdir -p build/kernel
 	$(LD) $(LDFLAGS) -T $(KERNEL)/kernel.ld -o $(BUILD_KERNEL)/kernel $(BUILD_KERNEL)/entry.o $(OBJS)  -b binary build/kernel/initcode build/kernel/entryother
 	$(OBJDUMP) -S $(BUILD_KERNEL)/kernel > $(BUILD_KERNEL)/kernel.asm
 	$(OBJDUMP) -t $(BUILD_KERNEL)/kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $(BUILD_KERNEL)/kernel.sym
@@ -147,31 +146,34 @@ kernelmemfs: $(MEMFSOBJS) entry.o entryother initcode kernel.ld fs.img
 	$(OBJDUMP) -S kernelmemfs > kernelmemfs.asm
 	$(OBJDUMP) -t kernelmemfs | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > kernelmemfs.sym
 
-tags: $(OBJS) entryother.S _init
-	etags *.S *.c
-
 $(KERNEL)/vectors.S: $(TOOLS)/vectors.pl
 	perl $(TOOLS)/vectors.pl > $(KERNEL)/vectors.S
+
 ULIB = $(BUILD_LIB)/ulib.o $(BUILD_LIB)/usys.o $(BUILD_LIB)/printf.o $(BUILD_LIB)/umalloc.o
 
-_init: build/bin/init.o $(ULIB)
+$(BUILD_LIB)/%.o: $(LIB)/%.c
+	@mkdir -p build build/lib
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(BUILD_LIB)/%.o: $(LIB)/%.S
+	@mkdir -p build build/lib
+	$(CC) $(ASFLAGS) -c -o $@ $<
+
+_%: $(BUILD_BIN)/%.o $(ULIB)
+	@mkdir -p build build/bin
 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^
 	$(OBJDUMP) -S $@ > $*.asm
 	$(OBJDUMP) -t $@ | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $*.sym
 
-_sh: build/bin/sh.o $(ULIB)
-	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^
-	$(OBJDUMP) -S $@ > $*.asm
-	$(OBJDUMP) -t $@ | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $*.sym
-
-
-$(BUILD_BIN)/_forktest: $(BUILD_BIN)/forktest.o $(ULIB)
+_forktest: $(BUILD_BIN)/forktest.o $(ULIB)
 	# forktest has less library code linked in - needs to be small
 	# in order to be able to max out the proc table.
-	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o _forktest forktest.o ulib.o usys.o
+	@mkdir -p build build/bin
+	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o _forktest $(BUILD_BIN)/forktest.o $(BUILD_LIB)/ulib.o $(BUILD_LIB)/usys.o
 	$(OBJDUMP) -S _forktest > forktest.asm
 
 $(BUILD)/mkfs: $(TOOLS)/mkfs.c $(INCLUDE)/fs.h
+	@mkdir -p build
 	gcc -Werror -Wall -o $(BUILD)/mkfs $(TOOLS)/mkfs.c
 
 # Prevent deletion of intermediate files, e.g. cat.o, after first build, so
@@ -181,41 +183,33 @@ $(BUILD)/mkfs: $(TOOLS)/mkfs.c $(INCLUDE)/fs.h
 .PRECIOUS: %.o
 
 UPROGS=\
-	$(BUILD_BIN)/_cat\
-	$(BUILD_BIN)/_echo\
-	$(BUILD_BIN)/_forktest\
-	$(BUILD_BIN)/_grep\
-	$(BUILD_BIN)/_init\
-	$(BUILD_BIN)/_kill\
-	$(BUILD_BIN)/_ln\
-	$(BUILD_BIN)/_ls\
-	$(BUILD_BIN)/_mkdir\
-	$(BUILD_BIN)/_rm\
-	$(BUILD_BIN)/_sh\
-	$(BUILD_BIN)/_stressfs\
-	$(BUILD_BIN)/_usertests\
-	$(BUILD_BIN)/_wc\
-	$(BUILD_BIN)/_zombie\
+	_cat\
+	_echo\
+	_forktest\
+	_grep\
+	_init\
+	_kill\
+	_ln\
+	_ls\
+	_mkdir\
+	_rm\
+	_sh\
+	_stressfs\
+	_usertests\
+	_wc\
+	_zombie\
 
-$(BUILD)/fs.img: $(BUILD)/mkfs README.org _init _sh #$(UPROGS)
-	./$(BUILD)/mkfs $(BUILD)/fs.img README.org _init _sh #$(UPROGS)
+$(BUILD)/fs.img: $(BUILD)/mkfs README.org $(UPROGS)
+	./$(BUILD)/mkfs $(BUILD)/fs.img README.org $(UPROGS)
 
 -include *.d
 
 clean:
-	rm -vrf build/kernel/*
-	rm -vrf build/mkfs
-
-
-# make a printout
-FILES = $(shell grep -v '^\#' runoff.list)
-PRINT = runoff.list runoff.spec README toc.hdr toc.ftr $(FILES)
-
-xv6.pdf: $(PRINT)
-	./runoff
-	ls -l xv6.pdf
-
-print: xv6.pdf
+	rm -vrf build/*
+	rmdir -v build
+	rm -vrf ./_*
+	rm -vrf ./*.asm
+	rm -vrf ./*.sym
 
 # run in emulators
 

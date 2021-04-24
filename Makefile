@@ -3,9 +3,29 @@ BUILD_KERNEL = $(BUILD)/kernel
 BUILD_LIB = $(BUILD)/lib
 BUILD_BIN = $(BUILD)/bin
 
-INCLUDE = include
+BIN = bin 
+LIB = lib
 KERNEL = kernel
 TOOLS = tools
+INCLUDE = include
+
+ifndef QEMU
+QEMU = $(shell if which qemu > /dev/null; \
+	then echo qemu; exit; \
+	elif which qemu-system-i386 > /dev/null; \
+	then echo qemu-system-i386; exit; \
+	elif which qemu-system-x86_64 > /dev/null; \
+	then echo qemu-system-x86_64; exit; \
+	else \
+	qemu=/Applications/Q.app/Contents/MacOS/i386-softmmu.app/Contents/MacOS/i386-softmmu; \
+	if test -x $$qemu; then echo $$qemu; exit; fi; fi; \
+	echo "***" 1>&2; \
+	echo "*** Error: Couldn't find a working QEMU executable." 1>&2; \
+	echo "*** Is the directory containing the qemu binary in your PATH" 1>&2; \
+	echo "*** or have you tried setting the QEMU variable in Makefile?" 1>&2; \
+	echo "***" 1>&2; exit 1)
+endif
+
 
 OBJS = \
 	$(BUILD_KERNEL)/bio.o\
@@ -37,49 +57,6 @@ OBJS = \
 	$(BUILD_KERNEL)/vectors.o\
 	$(BUILD_KERNEL)/vm.o
 
-# Cross-compiling (e.g., on Mac OS X)
-# TOOLPREFIX = i386-jos-elf
-
-# Using native tools (e.g., on X86 Linux)
-#TOOLPREFIX =
-
-# Try to infer the correct TOOLPREFIX if not set
-ifndef TOOLPREFIX
-TOOLPREFIX := $(shell if i386-jos-elf-objdump -i 2>&1 | grep '^elf32-i386$$' >/dev/null 2>&1; \
-	then echo 'i386-jos-elf-'; \
-	elif objdump -i 2>&1 | grep 'elf32-i386' >/dev/null 2>&1; \
-	then echo ''; \
-	else echo "***" 1>&2; \
-	echo "*** Error: Couldn't find an i386-*-elf version of GCC/binutils." 1>&2; \
-	echo "*** Is the directory with i386-jos-elf-gcc in your PATH?" 1>&2; \
-	echo "*** If your i386-*-elf toolchain is installed with a command" 1>&2; \
-	echo "*** prefix other than 'i386-jos-elf-', set your TOOLPREFIX" 1>&2; \
-	echo "*** environment variable to that prefix and run 'make' again." 1>&2; \
-	echo "*** To turn off this error, run 'gmake TOOLPREFIX= ...'." 1>&2; \
-	echo "***" 1>&2; exit 1; fi)
-endif
-
-# If the makefile can't find QEMU, specify its path here
-# QEMU = qemu-system-i386
-
-# Try to infer the correct QEMU
-ifndef QEMU
-QEMU = $(shell if which qemu > /dev/null; \
-	then echo qemu; exit; \
-	elif which qemu-system-i386 > /dev/null; \
-	then echo qemu-system-i386; exit; \
-	elif which qemu-system-x86_64 > /dev/null; \
-	then echo qemu-system-x86_64; exit; \
-	else \
-	qemu=/Applications/Q.app/Contents/MacOS/i386-softmmu.app/Contents/MacOS/i386-softmmu; \
-	if test -x $$qemu; then echo $$qemu; exit; fi; fi; \
-	echo "***" 1>&2; \
-	echo "*** Error: Couldn't find a working QEMU executable." 1>&2; \
-	echo "*** Is the directory containing the qemu binary in your PATH" 1>&2; \
-	echo "*** or have you tried setting the QEMU variable in Makefile?" 1>&2; \
-	echo "***" 1>&2; exit 1)
-endif
-
 CC = $(TOOLPREFIX)gcc
 AS = $(TOOLPREFIX)gas
 LD = $(TOOLPREFIX)ld
@@ -100,16 +77,16 @@ ifneq ($(shell $(CC) -dumpspecs 2>/dev/null | grep -e '[^f]nopie'),)
 CFLAGS += -fno-pie -nopie
 endif
 
-xv6.img: $(BUILD_KERNEL)/bootblock $(BUILD_KERNEL)/kernel
+$(BUILD)/xv6.img: $(BUILD_KERNEL)/bootblock $(BUILD_KERNEL)/kernel
 	dd if=/dev/zero of=$@ count=10000
 	dd if=$< of=$@ conv=notrunc
 	dd if=$(BUILD_KERNEL)/kernel of=$@ seek=1 conv=notrunc
 
-xv6memfs.img: bootblock kernelmemfs
-	dd if=/dev/zero of=xv6memfs.img count=10000
-	dd if=bootblock of=xv6memfs.img conv=notrunc
-	dd if=kernelmemfs of=xv6memfs.img seek=1 conv=notrunc
-	
+$(BUILD)/xv6memfs.img: $(BUILD_KERNEL)/bootblock $(BUILD_KERNEL)/kernelmemfs
+	dd if=/dev/zero of=$(BUILD)/xv6memfs.img count=10000
+	dd if=$(BUILD_KERNEL)/bootblock of=$(BUILD)/xv6memfs.img conv=notrunc
+	dd if=$(BUILD_KERNEL)/kernelmemfs of=$(BUILD)/xv6memfs.img seek=1 conv=notrunc
+
 $(BUILD_KERNEL)/%.o: $(KERNEL)/%.c
 	@mkdir -p build/kernel
 	$(CC) $(CFLAGS) -c -o $@ $<
@@ -118,8 +95,19 @@ $(BUILD_KERNEL)/%.o: $(KERNEL)/%.S
 	@mkdir -p build/kernel
 	$(CC) $(ASFLAGS) -c -o $@ $<
 
-$(KERNEL)/vectors.S: $(TOOLS)/vectors.pl
-	perl $(TOOLS)/vectors.pl > $(KERNEL)/vectors.S
+# userspace object files
+build/bin/init.o: bin/init.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+build/bin/sh.o: bin/sh.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(BUILD_LIB)/%.o: $(LIB)/%.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(BUILD_LIB)/%.o: $(LIB)/%.S
+	$(CC) $(ASFLAGS) -c -o $@ $<
+
 
 
 $(BUILD_KERNEL)/bootblock: $(KERNEL)/bootasm.S $(KERNEL)/bootmain.c
@@ -162,17 +150,22 @@ kernelmemfs: $(MEMFSOBJS) entry.o entryother initcode kernel.ld fs.img
 tags: $(OBJS) entryother.S _init
 	etags *.S *.c
 
-vectors.S: vectors.pl
-	./vectors.pl > vectors.S
+$(KERNEL)/vectors.S: $(TOOLS)/vectors.pl
+	perl $(TOOLS)/vectors.pl > $(KERNEL)/vectors.S
+ULIB = $(BUILD_LIB)/ulib.o $(BUILD_LIB)/usys.o $(BUILD_LIB)/printf.o $(BUILD_LIB)/umalloc.o
 
-ULIB = ulib.o usys.o printf.o umalloc.o
-
-_%: %.o $(ULIB)
+_init: build/bin/init.o $(ULIB)
 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^
 	$(OBJDUMP) -S $@ > $*.asm
 	$(OBJDUMP) -t $@ | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $*.sym
 
-_forktest: forktest.o $(ULIB)
+_sh: build/bin/sh.o $(ULIB)
+	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^
+	$(OBJDUMP) -S $@ > $*.asm
+	$(OBJDUMP) -t $@ | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $*.sym
+
+
+$(BUILD_BIN)/_forktest: $(BUILD_BIN)/forktest.o $(ULIB)
 	# forktest has less library code linked in - needs to be small
 	# in order to be able to max out the proc table.
 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o _forktest forktest.o ulib.o usys.o
@@ -188,33 +181,31 @@ $(BUILD)/mkfs: $(TOOLS)/mkfs.c $(INCLUDE)/fs.h
 .PRECIOUS: %.o
 
 UPROGS=\
-	_cat\
-	_echo\
-	_forktest\
-	_grep\
-	_init\
-	_kill\
-	_ln\
-	_ls\
-	_mkdir\
-	_rm\
-	_sh\
-	_stressfs\
-	_usertests\
-	_wc\
-	_zombie\
+	$(BUILD_BIN)/_cat\
+	$(BUILD_BIN)/_echo\
+	$(BUILD_BIN)/_forktest\
+	$(BUILD_BIN)/_grep\
+	$(BUILD_BIN)/_init\
+	$(BUILD_BIN)/_kill\
+	$(BUILD_BIN)/_ln\
+	$(BUILD_BIN)/_ls\
+	$(BUILD_BIN)/_mkdir\
+	$(BUILD_BIN)/_rm\
+	$(BUILD_BIN)/_sh\
+	$(BUILD_BIN)/_stressfs\
+	$(BUILD_BIN)/_usertests\
+	$(BUILD_BIN)/_wc\
+	$(BUILD_BIN)/_zombie\
 
-fs.img: $(BUILD)/mkfs README.org #$(UPROGS)
-	./$(BUILD)/mkfs fs.img README.org #$(UPROGS)
+$(BUILD)/fs.img: $(BUILD)/mkfs README.org _init _sh #$(UPROGS)
+	./$(BUILD)/mkfs $(BUILD)/fs.img README.org _init _sh #$(UPROGS)
 
 -include *.d
 
-clean: 
-	rm -f *.tex *.dvi *.idx *.aux *.log *.ind *.ilg \
-	*.o *.d *.asm *.sym vectors.S bootblock entryother \
-	initcode initcode.out kernel xv6.img fs.img kernelmemfs \
-	xv6memfs.img mkfs .gdbinit \
-	$(UPROGS)
+clean:
+	rm -vrf build/kernel/*
+	rm -vrf build/mkfs
+
 
 # make a printout
 FILES = $(shell grep -v '^\#' runoff.list)
@@ -241,25 +232,25 @@ QEMUGDB = $(shell if $(QEMU) -help | grep -q '^-gdb'; \
 ifndef CPUS
 CPUS := 2
 endif
-QEMUOPTS = -drive file=fs.img,index=1,media=disk,format=raw -drive file=xv6.img,index=0,media=disk,format=raw -smp $(CPUS) -m 512 $(QEMUEXTRA)
+QEMUOPTS = -drive file=$(BUILD)/fs.img,index=1,media=disk,format=raw -drive file=$(BUILD)/xv6.img,index=0,media=disk,format=raw -smp $(CPUS) -m 512 $(QEMUEXTRA)
 
-qemu: fs.img xv6.img
+qemu: $(BUILD)/fs.img $(BUILD)/xv6.img
 	$(QEMU) -serial mon:stdio $(QEMUOPTS)
 
 qemu-memfs: xv6memfs.img
 	$(QEMU) -drive file=xv6memfs.img,index=0,media=disk,format=raw -smp $(CPUS) -m 256
 
-qemu-nox: fs.img xv6.img
+qemu-nox: $(BUILD)/fs.img $(BUILD)/xv6.img
 	$(QEMU) -nographic $(QEMUOPTS)
 
 .gdbinit: .gdbinit.tmpl
 	sed "s/localhost:1234/localhost:$(GDBPORT)/" < $^ > $@
 
-qemu-gdb: fs.img xv6.img .gdbinit
+qemu-gdb: $(BUILD)/fs.img $(BUILD)/xv6.img .gdbinit
 	@echo "*** Now run 'gdb'." 1>&2
 	$(QEMU) -serial mon:stdio $(QEMUOPTS) -S $(QEMUGDB)
 
-qemu-nox-gdb: fs.img xv6.img .gdbinit
+qemu-nox-gdb: $(BUILD)/fs.img $(BUILD)/xv6.img .gdbinit
 	@echo "*** Now run 'gdb'." 1>&2
 	$(QEMU) -nographic $(QEMUOPTS) -S $(QEMUGDB)
 

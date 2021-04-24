@@ -330,6 +330,11 @@ scheduler(void)
     // Enable interrupts on this processor.
     sti();
 
+    // 空闲时 idle cpu
+    if (p == &ptable.proc[NPROC]) {
+        hlt();
+    }
+
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){

@@ -1,5 +1,5 @@
 * pangu
-    unix-link opration system
+    unix-link operating system based on xv6.
     
 ** run
 #+BEGIN_QUOTE

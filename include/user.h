@@ -1,5 +1,6 @@
 struct stat;
 struct rtcdate;
+struct sockaddr;
 
 // system calls
 int fork(void);
@@ -24,6 +25,17 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 
+int ioctl(int, int, ...);
+int socket(int, int, int);
+int connect(int, struct sockaddr*, int);
+int bind(int, struct sockaddr*, int);
+int listen(int, int);
+int accept(int, struct sockaddr*, int*);
+int recv(int, char*, int);
+int send(int, char*, int);
+int recvfrom(int, char*, int, struct sockaddr*, int*);
+int sendto(int, char*, int, struct sockaddr*, int);
+
 // ulib.c
 int stat(const char*, struct stat*);
 char* strcpy(char*, const char*);
@@ -37,3 +49,14 @@ void* memset(void*, int, uint);
 void* malloc(uint);
 void free(void*);
 int atoi(const char*);
+// additional functions
+void hexdump(void *data, size_t size);
+uint16_t hton16(uint16_t h);
+uint16_t ntoh16(uint16_t n);
+uint32_t hton32(uint32_t h);
+uint32_t ntoh32(uint32_t n);
+long strtol(const char *s, char **endptr, int base);
+int ip_addr_pton(const char *p, ip_addr_t *n);
+
+#define IP_ADDR_LEN 4
+#define IP_ADDR_STR_LEN 16 /* "ddd.ddd.ddd.ddd\0" */

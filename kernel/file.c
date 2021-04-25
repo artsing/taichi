@@ -77,6 +77,9 @@ fileclose(struct file *f)
     iput(ff.ip);
     end_op();
   }
+  else if(ff.type == FD_SOCKET){
+    socketclose(ff.socket);
+  }
 }
 
 // Get metadata about file f.
@@ -109,6 +112,8 @@ fileread(struct file *f, char *addr, int n)
     iunlock(f->ip);
     return r;
   }
+  if(f->type == FD_SOCKET)
+    return socketread(f->socket, addr, n);
   panic("fileread");
 }
 
@@ -152,6 +157,15 @@ filewrite(struct file *f, char *addr, int n)
     }
     return i == n ? n : -1;
   }
+  if(f->type == FD_SOCKET)
+    return socketwrite(f->socket, addr, n);
   panic("filewrite");
 }
 
+int
+fileioctl(struct file *f, int req, void *arg)
+{
+  if(f->type == FD_SOCKET)
+    return socketioctl(f->socket, req, arg);
+  return -1;
+}

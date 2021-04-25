@@ -6,6 +6,7 @@ BUILD_BIN = $(BUILD)/bin
 BIN = bin
 LIB = lib
 KERNEL = kernel
+NET = net
 TOOLS = tools
 INCLUDE = include
 
@@ -40,8 +41,10 @@ OBJS = \
 	$(BUILD_KERNEL)/log.o\
 	$(BUILD_KERNEL)/main.o\
 	$(BUILD_KERNEL)/mp.o\
+	$(BUILD_KERNEL)/pci.o\
 	$(BUILD_KERNEL)/picirq.o\
 	$(BUILD_KERNEL)/pipe.o\
+	$(BUILD_KERNEL)/printfmt.o\
 	$(BUILD_KERNEL)/proc.o\
 	$(BUILD_KERNEL)/sleeplock.o\
 	$(BUILD_KERNEL)/spinlock.o\
@@ -54,15 +57,33 @@ OBJS = \
 	$(BUILD_KERNEL)/trap.o\
 	$(BUILD_KERNEL)/uart.o\
 	$(BUILD_KERNEL)/vectors.o\
-	$(BUILD_KERNEL)/vm.o
+	$(BUILD_KERNEL)/vm.o\
+
+NET_OBJS = \
+	$(BUILD_KERNEL)/arp.o\
+	$(BUILD_KERNEL)/common.o\
+	$(BUILD_KERNEL)/e1000.o\
+	$(BUILD_KERNEL)/ethernet.o\
+	$(BUILD_KERNEL)/icmp.o\
+	$(BUILD_KERNEL)/ip.o\
+	$(BUILD_KERNEL)/mt19937ar.o\
+	$(BUILD_KERNEL)/net.o\
+	$(BUILD_KERNEL)/socket.o\
+	$(BUILD_KERNEL)/sysnet.o\
+	$(BUILD_KERNEL)/syssocket.o\
+	$(BUILD_KERNEL)/tcp.o\
+	$(BUILD_KERNEL)/udp.o\
+
+OBJS += $(NET_OBJS)
+
 
 CC = $(TOOLPREFIX)gcc
 AS = $(TOOLPREFIX)gas
 LD = $(TOOLPREFIX)ld
 OBJCOPY = $(TOOLPREFIX)objcopy
 OBJDUMP = $(TOOLPREFIX)objdump
-CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer
-CFLAGS += -Iinclude
+CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -Wno-unused-variable -Wno-unused-function -Wno-address-of-packed-member
+CFLAGS += -Iinclude -Werror=implicit-function-declaration
 CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
 ASFLAGS = -m32 -gdwarf-2 -Wa,-divide -Iinclude 
 # FreeBSD ld wants ``elf_i386_fbsd''
@@ -75,6 +96,9 @@ endif
 ifneq ($(shell $(CC) -dumpspecs 2>/dev/null | grep -e '[^f]nopie'),)
 CFLAGS += -fno-pie -nopie
 endif
+
+GCC_LIB := $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
+
 
 all: qemu-nox
 
@@ -91,6 +115,10 @@ $(BUILD)/xv6memfs.img: $(BUILD_KERNEL)/bootblock $(BUILD_KERNEL)/kernelmemfs
 	dd if=$(BUILD_KERNEL)/kernelmemfs of=$(BUILD)/xv6memfs.img seek=1 conv=notrunc
 
 $(BUILD_KERNEL)/%.o: $(KERNEL)/%.c
+	@mkdir -p build/kernel
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(BUILD_KERNEL)/%.o: $(NET)/%.c
 	@mkdir -p build/kernel
 	$(CC) $(CFLAGS) -c -o $@ $<
 
@@ -129,7 +157,7 @@ $(BUILD_KERNEL)/initcode: $(KERNEL)/initcode.S
 
 $(BUILD_KERNEL)/kernel: $(OBJS) $(BUILD_KERNEL)/entry.o $(BUILD_KERNEL)/entryother $(BUILD_KERNEL)/initcode $(KERNEL)/kernel.ld
 	@mkdir -p build/kernel
-	$(LD) $(LDFLAGS) -T $(KERNEL)/kernel.ld -o $(BUILD_KERNEL)/kernel $(BUILD_KERNEL)/entry.o $(OBJS)  -b binary build/kernel/initcode build/kernel/entryother
+	$(LD) $(LDFLAGS) -T $(KERNEL)/kernel.ld -o $(BUILD_KERNEL)/kernel $(BUILD_KERNEL)/entry.o $(OBJS) $(GCC_LIB) -b binary build/kernel/initcode build/kernel/entryother
 	$(OBJDUMP) -S $(BUILD_KERNEL)/kernel > $(BUILD_KERNEL)/kernel.asm
 	$(OBJDUMP) -t $(BUILD_KERNEL)/kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $(BUILD_KERNEL)/kernel.sym
 
@@ -173,7 +201,7 @@ _forktest: $(BUILD_BIN)/forktest.o $(ULIB)
 
 $(BUILD)/mkfs: $(TOOLS)/mkfs.c $(INCLUDE)/fs.h
 	@mkdir -p build
-	gcc -Werror -Wall -o $(BUILD)/mkfs $(TOOLS)/mkfs.c
+	gcc -Werror -Wall -DBUILD_MKFS -o $(BUILD)/mkfs $(TOOLS)/mkfs.c
 
 # Prevent deletion of intermediate files, e.g. cat.o, after first build, so
 # that disk image changes after first build are persistent until clean.  More
@@ -194,9 +222,15 @@ UPROGS=\
 	_rm\
 	_sh\
 	_stressfs\
-	_usertests\
 	_wc\
 	_zombie\
+	
+NET_PROGS=\
+	  _ifconfig\
+	  _tcpechoserver\
+	  _udpechoserver\
+
+UPROGS += $(NET_PROGS)
 
 $(BUILD)/fs.img: $(BUILD)/mkfs README.org $(UPROGS)
 	./$(BUILD)/mkfs $(BUILD)/fs.img README.org $(UPROGS)
@@ -219,7 +253,10 @@ QEMUGDB = $(shell if $(QEMU) -help | grep -q '^-gdb'; \
 ifndef CPUS
 CPUS := 2
 endif
-QEMUOPTS = -drive file=$(BUILD)/fs.img,index=1,media=disk,format=raw -drive file=$(BUILD)/xv6.img,index=0,media=disk,format=raw -smp $(CPUS) -m 512 $(QEMUEXTRA)
+
+QEMUOPTS = -drive file=$(BUILD)/fs.img,index=1,media=disk,format=raw -drive file=$(BUILD)/xv6.img,index=0,media=disk,format=raw -smp $(CPUS) -m 512 $(QEMUEXTRA) $(QEMUNET)
+
+QEMUNET = -netdev user,id=n1,hostfwd=udp::10007-:7,hostfwd=tcp::10007-:7 -device e1000,netdev=n1 -object filter-dump,id=f1,netdev=n1,file=$(TOOLS)/n1.pcap -netdev tap,id=n2,ifname=tap0 -device e1000,netdev=n2 -object filter-dump,id=f2,netdev=n2,file=$(TOOLS)/n2.pcap
 
 qemu: $(BUILD)/fs.img $(BUILD)/xv6.img
 	$(QEMU) -serial mon:stdio $(QEMUOPTS)
@@ -241,4 +278,13 @@ qemu-nox-gdb: $(BUILD)/fs.img $(BUILD)/xv6.img .gdbinit
 	@echo "*** Now run 'gdb'." 1>&2
 	$(QEMU) -nographic $(QEMUOPTS) -S $(QEMUGDB)
 
-.PHONY: clean
+run: $(BUILD)/xv6.img $(BUILD)/fs.img
+	ip tuntap add mode tap name tap0
+	ip addr add 172.16.100.1/24 dev tap0
+	ip link set tap0 up
+	$(QEMU) -nographic $(QEMUOPTS)
+
+clear: 
+	ip tuntap del mode tap name tap0
+
+.PHONY: clean clear run

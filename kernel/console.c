@@ -24,6 +24,7 @@ static struct {
   int locking;
 } cons;
 
+#if 0
 static void
 printint(int xx, int base, int sign)
 {
@@ -101,6 +102,43 @@ cprintf(char *fmt, ...)
 
   if(locking)
     release(&cons.lock);
+}
+#endif
+
+static void
+putch(int ch, int *cnt)
+{
+    consputc(ch);
+    (void)*cnt++;
+}
+
+static int
+vcprintf(const char *fmt, va_list ap)
+{
+    int cnt = 0;
+
+    vprintfmt((void*)putch, &cnt, fmt, ap);
+    return cnt;
+}
+
+int
+cprintf(const char *fmt, ...)
+{
+    int locking, cnt;
+    va_list ap;
+
+    locking = cons.locking;
+    if(locking)
+        acquire(&cons.lock);
+
+    va_start(ap, fmt);
+    cnt = vcprintf(fmt, ap);
+    va_end(ap);
+
+    if(locking)
+        release(&cons.lock);
+
+    return cnt;
 }
 
 void

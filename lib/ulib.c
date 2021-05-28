@@ -15,6 +15,22 @@ strcpy(char *s, const char *t)
   return os;
 }
 
+char* strcat_s(char *dest, char *right, int max_len) {
+    int writing = -1;
+    for(int i = 0; i !=max_len; i++){
+        if(writing < 0 && dest[i] == 0){
+            writing = i;
+        }
+        if(writing >= 0){
+            dest[i] = right[i - writing];
+            if(dest[i] == 0){
+                break;
+            }
+        }
+    }
+    return dest;
+}
+
 int
 strcmp(const char *p, const char *q)
 {

@@ -68,7 +68,7 @@ int
 main(int argc, char *argv[])
 {
     int i, cc, fd;
-    uint rootino, inum, off;
+    uint rootino, inum, bin_ino, home_ino, dev_ino, ino, off;
     struct dirent de;
     char buf[BSIZE];
     struct dinode din;
@@ -127,6 +127,57 @@ main(int argc, char *argv[])
     strcpy(de.name, "..");
     iappend(rootino, &de, sizeof(de));
 
+
+    bin_ino = ialloc(T_DIR);
+    bzero(&de, sizeof(de));
+    de.inum = bin_ino;
+    strcpy(de.name, "bin");
+    iappend(rootino, &de, sizeof(de));
+
+    bzero(&de, sizeof(de));
+    de.inum = xshort(bin_ino);
+    strcpy(de.name, ".");
+    iappend(bin_ino, &de, sizeof(de));
+
+    bzero(&de, sizeof(de));
+    de.inum = xshort(rootino);
+    strcpy(de.name, "..");
+    iappend(bin_ino, &de, sizeof(de));
+
+    home_ino = ialloc(T_DIR);
+    bzero(&de, sizeof(de));
+    de.inum = home_ino;
+    strcpy(de.name, "home");
+    iappend(rootino, &de, sizeof(de));
+
+    bzero(&de, sizeof(de));
+    de.inum = xshort(home_ino);
+    strcpy(de.name, ".");
+    iappend(home_ino, &de, sizeof(de));
+
+    bzero(&de, sizeof(de));
+    de.inum = xshort(rootino);
+    strcpy(de.name, "..");
+    iappend(home_ino, &de, sizeof(de));
+
+
+    dev_ino = ialloc(T_DIR);
+    bzero(&de, sizeof(de));
+    de.inum = dev_ino;
+    strcpy(de.name, "dev");
+    iappend(rootino, &de, sizeof(de));
+
+    bzero(&de, sizeof(de));
+    de.inum = xshort(dev_ino);
+    strcpy(de.name, ".");
+    iappend(dev_ino, &de, sizeof(de));
+
+    bzero(&de, sizeof(de));
+    de.inum = xshort(rootino);
+    strcpy(de.name, "..");
+    iappend(dev_ino, &de, sizeof(de));
+
+
     for(i = 2; i < argc; i++){
 	//assert(index(argv[i], '/') == 0);
 
@@ -143,15 +194,19 @@ main(int argc, char *argv[])
             argv[i] += 10;
         }
 
-        if(argv[i][0] == '_')
+        if(argv[i][0] == '_') {
             ++argv[i];
+	    ino = bin_ino;
+	} else {
+	    ino = rootino;
+	}
 
         inum = ialloc(T_FILE);
 
         bzero(&de, sizeof(de));
         de.inum = xshort(inum);
         strncpy(de.name, argv[i], DIRSIZ);
-        iappend(rootino, &de, sizeof(de));
+        iappend(ino, &de, sizeof(de));
 
         while((cc = read(fd, buf, sizeof(buf))) > 0)
         iappend(inum, buf, cc);

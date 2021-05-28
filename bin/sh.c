@@ -63,6 +63,7 @@ runcmd(struct cmd *cmd)
   struct listcmd *lcmd;
   struct pipecmd *pcmd;
   struct redircmd *rcmd;
+  char buf[256];
 
   if(cmd == 0)
     exit();
@@ -75,13 +76,18 @@ runcmd(struct cmd *cmd)
     ecmd = (struct execcmd*)cmd;
     if(ecmd->argv[0] == 0)
       exit();
-    exec(ecmd->argv[0], ecmd->argv);
+    //exec(ecmd->argv[0], ecmd->argv);
+
+    strcpy(buf, "/bin/");
+    strcat_s(buf, ecmd->argv[0], 256);
+    exec(buf, ecmd->argv);
     printf(2, "exec %s failed\n", ecmd->argv[0]);
     break;
 
   case REDIR:
     rcmd = (struct redircmd*)cmd;
     close(rcmd->fd);
+    printf(1, "%s, %d\n", rcmd->file, rcmd->mode);
     if(open(rcmd->file, rcmd->mode) < 0){
       printf(2, "open %s failed\n", rcmd->file);
       exit();
@@ -148,7 +154,7 @@ main(void)
   int fd;
 
   // Ensure that three file descriptors are open.
-  while((fd = open("console", O_RDWR)) >= 0){
+  while((fd = open("/dev/console", O_RDWR)) >= 0){
     if(fd >= 3){
       close(fd);
       break;

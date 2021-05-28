@@ -186,18 +186,18 @@ $(BUILD_LIB)/%.o: $(LIB)/%.S
 	@mkdir -p build build/lib
 	$(CC) $(ASFLAGS) -c -o $@ $<
 
-_%: $(BUILD_BIN)/%.o $(ULIB)
+$(BUILD_BIN)/_%: $(BUILD_BIN)/%.o $(ULIB)
 	@mkdir -p build build/bin
 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^
-	$(OBJDUMP) -S $@ > $*.asm
-	$(OBJDUMP) -t $@ | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $*.sym
+	$(OBJDUMP) -S $@ > $(BUILD_BIN)/$*.asm
+	$(OBJDUMP) -t $@ | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $(BUILD_BIN)/$*.sym
 
-_forktest: $(BUILD_BIN)/forktest.o $(ULIB)
+$(BUILD_BIN)/_forktest: $(BUILD_BIN)/forktest.o $(ULIB)
 	# forktest has less library code linked in - needs to be small
 	# in order to be able to max out the proc table.
 	@mkdir -p build build/bin
-	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o _forktest $(BUILD_BIN)/forktest.o $(BUILD_LIB)/ulib.o $(BUILD_LIB)/usys.o
-	$(OBJDUMP) -S _forktest > forktest.asm
+	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $(BUILD_BIN)/forktest.o $(BUILD_LIB)/ulib.o $(BUILD_LIB)/usys.o
+	$(OBJDUMP) -S $@ > $(BUILD_BIN)/forktest.asm
 
 $(BUILD)/mkfs: $(TOOLS)/mkfs.c $(INCLUDE)/fs.h
 	@mkdir -p build
@@ -210,25 +210,26 @@ $(BUILD)/mkfs: $(TOOLS)/mkfs.c $(INCLUDE)/fs.h
 .PRECIOUS: $(BUILD_BIN)/%.o
 
 UPROGS=\
-	_cat\
-	_echo\
-	_forktest\
-	_grep\
-	_init\
-	_kill\
-	_ln\
-	_ls\
-	_mkdir\
-	_rm\
-	_sh\
-	_stressfs\
-	_wc\
-	_zombie\
+	$(BUILD_BIN)/_cat\
+	$(BUILD_BIN)/_echo\
+	$(BUILD_BIN)/_forktest\
+	$(BUILD_BIN)/_grep\
+	$(BUILD_BIN)/_init\
+	$(BUILD_BIN)/_kill\
+	$(BUILD_BIN)/_ln\
+	$(BUILD_BIN)/_ls\
+	$(BUILD_BIN)/_mkdir\
+	$(BUILD_BIN)/_rm\
+	$(BUILD_BIN)/_sh\
+	$(BUILD_BIN)/_stressfs\
+	$(BUILD_BIN)/_wc\
+	$(BUILD_BIN)/_usertests\
+	$(BUILD_BIN)/_zombie\
 	
 NET_PROGS=\
-	  _ifconfig\
-	  _tcpechoserver\
-	  _udpechoserver\
+	  $(BUILD_BIN)/_ifconfig\
+	  $(BUILD_BIN)/_tcpechoserver\
+	  $(BUILD_BIN)/_udpechoserver\
 
 UPROGS += $(NET_PROGS)
 
@@ -239,9 +240,6 @@ $(BUILD)/fs.img: $(BUILD)/mkfs README.org $(UPROGS)
 
 clean:
 	rm -vrf build
-	rm -vrf ./_*
-	rm -vrf ./*.asm
-	rm -vrf ./*.sym
 
 # run in emulators
 # try to generate a unique GDB port

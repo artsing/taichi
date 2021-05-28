@@ -139,15 +139,12 @@ main(int argc, char *argv[])
         // The binaries are named _rm, _cat, etc. to keep the
         // build operating system from trying to execute them
         // in place of system binaries like rm and cat.
-	printf(">>>>>>>>>debug>>>>>>>>> %s\n", argv[i]);
-	if (!strncmp(argv[i], "build/bin/", 10)){
-	   argv[i] += 10; 
-	}
-        printf("end>>>>>>>>>debug>>>>>>>>> %s\n", argv[i]);
-
+        if (!strncmp(argv[i], "build/bin/", 10)){
+            argv[i] += 10;
+        }
 
         if(argv[i][0] == '_')
-        ++argv[i];
+            ++argv[i];
 
         inum = ialloc(T_FILE);
 

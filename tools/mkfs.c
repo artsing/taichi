@@ -40,6 +40,7 @@ void rinode(uint inum, struct dinode *ip);
 void rsect(uint sec, void *buf);
 uint ialloc(ushort type);
 void iappend(uint inum, void *p, int n);
+uint mkdir(uint pino, char* dir);
 
 // convert to intel byte order
 ushort
@@ -68,7 +69,7 @@ int
 main(int argc, char *argv[])
 {
     int i, cc, fd;
-    uint rootino, inum, bin_ino, home_ino, dev_ino, ino, off;
+    uint rootino, inum, bin_ino, ino, off;
     struct dirent de;
     char buf[BSIZE];
     struct dinode din;
@@ -128,66 +129,22 @@ main(int argc, char *argv[])
     iappend(rootino, &de, sizeof(de));
 
 
-    bin_ino = ialloc(T_DIR);
-    bzero(&de, sizeof(de));
-    de.inum = bin_ino;
-    strcpy(de.name, "bin");
-    iappend(rootino, &de, sizeof(de));
-
-    bzero(&de, sizeof(de));
-    de.inum = xshort(bin_ino);
-    strcpy(de.name, ".");
-    iappend(bin_ino, &de, sizeof(de));
-
-    bzero(&de, sizeof(de));
-    de.inum = xshort(rootino);
-    strcpy(de.name, "..");
-    iappend(bin_ino, &de, sizeof(de));
-
-    home_ino = ialloc(T_DIR);
-    bzero(&de, sizeof(de));
-    de.inum = home_ino;
-    strcpy(de.name, "home");
-    iappend(rootino, &de, sizeof(de));
-
-    bzero(&de, sizeof(de));
-    de.inum = xshort(home_ino);
-    strcpy(de.name, ".");
-    iappend(home_ino, &de, sizeof(de));
-
-    bzero(&de, sizeof(de));
-    de.inum = xshort(rootino);
-    strcpy(de.name, "..");
-    iappend(home_ino, &de, sizeof(de));
-
-
-    dev_ino = ialloc(T_DIR);
-    bzero(&de, sizeof(de));
-    de.inum = dev_ino;
-    strcpy(de.name, "dev");
-    iappend(rootino, &de, sizeof(de));
-
-    bzero(&de, sizeof(de));
-    de.inum = xshort(dev_ino);
-    strcpy(de.name, ".");
-    iappend(dev_ino, &de, sizeof(de));
-
-    bzero(&de, sizeof(de));
-    de.inum = xshort(rootino);
-    strcpy(de.name, "..");
-    iappend(dev_ino, &de, sizeof(de));
-
+    bin_ino = mkdir(rootino, "bin");
+    ino = mkdir(rootino, "home");
+    mkdir(rootino, "dev");
+    mkdir(rootino, "etc");
+    mkdir(ino, "artsing");
 
     for(i = 2; i < argc; i++){
-	//assert(index(argv[i], '/') == 0);
+	    //assert(index(argv[i], '/') == 0);
 
         if((fd = open(argv[i], 0)) < 0){
-        perror(argv[i]);
-        exit(1);
+            perror(argv[i]);
+            exit(1);
         }
 
-        // Skip leading _ in name when writing to file system.
-        // The binaries are named _rm, _cat, etc. to keep the
+        // Skip leading build/bin/_ in name when writing to file system.
+        // The binaries are named build/bin/_rm, build/bin/_cat, etc. to keep the
         // build operating system from trying to execute them
         // in place of system binaries like rm and cat.
         if (!strncmp(argv[i], "build/bin/", 10)){
@@ -196,10 +153,10 @@ main(int argc, char *argv[])
 
         if(argv[i][0] == '_') {
             ++argv[i];
-	    ino = bin_ino;
-	} else {
-	    ino = rootino;
-	}
+            ino = bin_ino;  // 放于/bin目录
+        } else {
+            ino = rootino;  // README.org放于/目录
+        }
 
         inum = ialloc(T_FILE);
 
@@ -208,8 +165,9 @@ main(int argc, char *argv[])
         strncpy(de.name, argv[i], DIRSIZ);
         iappend(ino, &de, sizeof(de));
 
-        while((cc = read(fd, buf, sizeof(buf))) > 0)
-        iappend(inum, buf, cc);
+        while((cc = read(fd, buf, sizeof(buf))) > 0) {
+            iappend(inum, buf, cc);
+        }
 
         close(fd);
   }
@@ -224,6 +182,30 @@ main(int argc, char *argv[])
   balloc(freeblock);
 
   exit(0);
+}
+
+uint
+mkdir(uint pino, char *dir_name) {
+    uint ino;
+    struct dirent de;
+
+    ino = ialloc(T_DIR);
+    bzero(&de, sizeof(de));
+    de.inum = ino;
+    strcpy(de.name, dir_name);
+    iappend(pino, &de, sizeof(de));
+
+    bzero(&de, sizeof(de));
+    de.inum = xshort(ino);
+    strcpy(de.name, ".");
+    iappend(ino, &de, sizeof(de));
+
+    bzero(&de, sizeof(de));
+    de.inum = xshort(pino);
+    strcpy(de.name, "..");
+    iappend(ino, &de, sizeof(de));
+
+    return ino;
 }
 
 void

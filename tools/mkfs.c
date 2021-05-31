@@ -131,8 +131,11 @@ main(int argc, char *argv[])
 
     bin_ino = mkdir(rootino, "bin");
     ino = mkdir(rootino, "home");
+    mkdir(rootino, "usr");
     mkdir(rootino, "dev");
     mkdir(rootino, "etc");
+    mkdir(rootino, "var");
+    mkdir(rootino, "opt");
     mkdir(ino, "artsing");
 
     for(i = 2; i < argc; i++){

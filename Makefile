@@ -131,6 +131,9 @@ $(BUILD_BIN)/%.o: $(BIN)/%.c
 	@mkdir -p build build/bin
 	$(CC) $(CFLAGS) -c -o $@ $<
 
+$(BUILD_BIN)/_uthread: $(BUILD_BIN)/uthread.o $(BUILD_BIN)/uthread_switch.o
+	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^ $(ULIB)
+	$(OBJDUMP) -S $@ > $(BUILD_BIN)/uthread.asm
 
 $(BUILD_KERNEL)/bootblock: $(KERNEL)/bootasm.S $(KERNEL)/bootmain.c
 	@mkdir -p build/kernel
@@ -186,6 +189,10 @@ $(BUILD_LIB)/%.o: $(LIB)/%.S
 	@mkdir -p build build/lib
 	$(CC) $(ASFLAGS) -c -o $@ $<
 
+$(BUILD_BIN)/%.o: $(BIN)/%.S
+	@mkdir -p build/bin
+	$(CC) $(ASFLAGS) -c -o $@ $<
+
 $(BUILD_BIN)/_%: $(BUILD_BIN)/%.o $(ULIB)
 	@mkdir -p build build/bin
 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^
@@ -223,6 +230,7 @@ UPROGS=\
 	$(BUILD_BIN)/_sh\
 	$(BUILD_BIN)/_stressfs\
 	$(BUILD_BIN)/_wc\
+	$(BUILD_BIN)/_uthread\
 	$(BUILD_BIN)/_usertests\
 	$(BUILD_BIN)/_zombie\
 	

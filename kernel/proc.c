@@ -124,7 +124,7 @@ userinit(void)
   extern char _binary_build_kernel_initcode_start[], _binary_build_kernel_initcode_size[];
 
   p = allocproc();
-  
+
   initproc = p;
   if((p->pgdir = setupkvm()) == 0)
     panic("userinit: out of memory?");

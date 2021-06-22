@@ -255,6 +255,9 @@ unsigned long   random(void);
 int             e1000_init(struct pci_func *pcif);
 void            e1000intr(void);
 
+// lbf_video.c
+int lbf_video_init(struct pci_func *pcif);
+
 // ethernet.c
 int             ethernet_addr_pton(const char *p, uint8_t *n);
 char *          ethernet_addr_ntop(const uint8_t *n, char *p, size_t size);

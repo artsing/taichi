@@ -74,7 +74,12 @@ NET_OBJS = \
 	$(BUILD_KERNEL)/tcp.o\
 	$(BUILD_KERNEL)/udp.o\
 
+VIDEO_OBJS = \
+	$(BUILD_KERNEL)/lbfvideo.o\
+
 OBJS += $(NET_OBJS)
+
+OBJS += $(VIDEO_OBJS)
 
 
 CC = $(TOOLPREFIX)gcc

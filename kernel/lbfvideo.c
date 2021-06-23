@@ -86,6 +86,11 @@ lbf_video_ioctl(struct inode* ip, int req, void* arg) {
         return (int)lfb_resolution_b;
     } else if (req == 4) {
         return (int)lfb_resolution_s;
+    } else if (req == 5) {
+        *((uintptr_t *)arg) = (uintptr_t)lfb_vid_memory;
+        return 5;
+    } else if (req == 6) {
+        return (int)lfb_memsize;
     }
     return -1;
 }

@@ -510,6 +510,21 @@ writei(struct inode *ip, char *src, uint off, uint n)
   return n;
 }
 
+
+int
+ioctli(struct inode *ip, int req, void *arg) {
+	int r = -1;
+	if(ip->type == T_DEV){
+		if(ip->major < 0 || ip->major >= NDEV || !devsw[ip->major].read) {
+			r = -1;
+		} else {
+			r = devsw[ip->major].ioctl(ip, req, arg);
+		}
+	}
+	return r;
+}
+
+
 //PAGEBREAK!
 // Directories
 

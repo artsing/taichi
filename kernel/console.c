@@ -323,6 +323,11 @@ consolewrite(struct inode *ip, char *buf, int n)
   return n;
 }
 
+int
+consoleioctl(struct inode* ip, int req, void* arg) {
+    return -1;
+}
+
 void
 consoleinit(void)
 {
@@ -330,6 +335,7 @@ consoleinit(void)
 
   devsw[CONSOLE].write = consolewrite;
   devsw[CONSOLE].read = consoleread;
+  devsw[CONSOLE].ioctl = consoleioctl;
   cons.locking = 1;
 
   ioapicenable(IRQ_KBD, 0);

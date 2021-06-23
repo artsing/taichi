@@ -238,6 +238,7 @@ UPROGS=\
 	$(BUILD_BIN)/_uthread\
 	$(BUILD_BIN)/_usertests\
 	$(BUILD_BIN)/_zombie\
+	$(BUILD_BIN)/_video\
 	
 NET_PROGS=\
 	  $(BUILD_BIN)/_ifconfig\

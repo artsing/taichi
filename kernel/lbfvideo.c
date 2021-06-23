@@ -4,12 +4,19 @@
 #include "memlayout.h"
 #include "mmu.h"
 #include "pci.h"
+#include "traps.h"
+#include "spinlock.h"
+#include "sleeplock.h"
+#include "fs.h"
+#include "file.h"
+#include "proc.h"
+#include "x86.h"
+
 
 static int PREFERRED_W = 1440;
 static int PREFERRED_H = 900;
 #define PREFERRED_VY 4096
 #define PREFERRED_B 32
-
 
 #define BOCHS_MMIO_ID       0x00
 #define BOCHS_MMIO_FBWIDTH  0x02
@@ -58,6 +65,32 @@ static void bochs_set_resolution(uint16_t x, uint16_t y) {
 }
 
 int
+lbf_video_read(struct inode *ip, char *dst, int n)
+{
+    return 0;
+}
+
+int
+lbf_video_write(struct inode *ip, char *buf, int n)
+{
+    return 0;
+}
+
+int
+lbf_video_ioctl(struct inode* ip, int req, void* arg) {
+    if (req == 1) {
+        return (int)lfb_resolution_x;
+    } else if (req == 2) {
+        return (int)lfb_resolution_y;
+    } else if (req == 3) {
+        return (int)lfb_resolution_b;
+    } else if (req == 4) {
+        return (int)lfb_resolution_s;
+    }
+    return -1;
+}
+
+int
 lbf_video_init(struct pci_func *pcif)
 {
     cprintf("[LBF][lbf_vide_init] dev_id = %02x dev_class = %02x.\n",
@@ -79,6 +112,10 @@ lbf_video_init(struct pci_func *pcif)
 
     bochs_mmio_out(BOCHS_MMIO_ID, 0xB0C4);
     bochs_set_resolution(PREFERRED_W, PREFERRED_H);
+
+    devsw[LBF].write = lbf_video_write;
+    devsw[LBF].read = lbf_video_read;
+    devsw[LBF].ioctl = lbf_video_ioctl;
 
     return 0;
 }

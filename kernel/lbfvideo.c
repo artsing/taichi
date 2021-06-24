@@ -37,6 +37,8 @@ const char * lfb_driver_name = "bochs";
 
 uintptr_t lfb_bochs_mmio = 0;
 
+#define GFX(x,y) *((uint32_t *)&(lfb_vid_memory)[((lfb_resolution_x) * (y) + (x)) * (lfb_resolution_b/8)])
+
 static void bochs_mmio_out(int off, uint16_t val) {
 	*(volatile uint16_t*)(lfb_bochs_mmio + 0x500 + off) = val;
 }
@@ -76,21 +78,71 @@ lbf_video_write(struct inode *ip, char *buf, int n)
     return 0;
 }
 
+uint32_t
+rgb(uint8_t r, uint8_t g, uint8_t b) {
+	return 0xFF000000 + (r * 0x10000) + (g * 0x100) + (b * 0x1);
+}
+
+int abs(int x) {
+    if (x < 0) {
+        return -x;
+    }
+    return x;
+}
+
+void draw_line(int32_t x0, int32_t x1, int32_t y0, int32_t y1, uint32_t color) {
+	int deltax = abs(x1 - x0);
+	int deltay = abs(y1 - y0);
+	int sx = (x0 < x1) ? 1 : -1;
+	int sy = (y0 < y1) ? 1 : -1;
+	int error = deltax - deltay;
+	while (1) {
+		if (x0 >= 0 && y0 >= 0 && x0 < lfb_resolution_x && y0 < lfb_resolution_y) {
+			GFX(x0, y0) = color;
+		}
+		if (x0 == x1 && y0 == y1) break;
+		int e2 = 2 * error;
+		if (e2 > -deltay) {
+			error -= deltay;
+			x0 += sx;
+		}
+		if (e2 < deltax) {
+			error += deltax;
+			y0 += sy;
+		}
+	}
+}
+
+static void set_point(int x, int y, uint32_t value) {
+	uint32_t * disp = (uint32_t *)lfb_vid_memory;
+	uint32_t * cell = &disp[y * (lfb_resolution_s / 4) + x];
+	*cell = value;
+}
+
 int
 lbf_video_ioctl(struct inode* ip, int req, void* arg) {
     if (req == 1) {
-        return (int)lfb_resolution_x;
+        *((uint16_t*)arg) = lfb_resolution_x;
+        return 1;
     } else if (req == 2) {
-        return (int)lfb_resolution_y;
+        *((uint16_t*)arg) = lfb_resolution_y;
+        return 1;
     } else if (req == 3) {
-        return (int)lfb_resolution_b;
+        *((uint16_t*)arg) = lfb_resolution_b;
+        return 1;
     } else if (req == 4) {
-        return (int)lfb_resolution_s;
+        *((uint16_t*)arg) = lfb_resolution_s;
+        return 1;
     } else if (req == 5) {
         *((uintptr_t *)arg) = (uintptr_t)lfb_vid_memory;
-        return 5;
+        return 1;
     } else if (req == 6) {
-        return (int)lfb_memsize;
+        *((uintptr_t *)arg) = lfb_memsize;
+        return 1;
+    } else if (req == 7) {
+        draw_line(0, 400, 0, 400, rgb(200, 11, 22));
+        draw_line(400, 0, 0, 400, rgb(120, 111, 122));
+        return 1;
     }
     return -1;
 }

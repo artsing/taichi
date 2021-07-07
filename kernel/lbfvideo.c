@@ -13,8 +13,8 @@
 #include "x86.h"
 
 
-static int PREFERRED_W = 1440;
-static int PREFERRED_H = 900;
+static int PREFERRED_W = 1024;
+static int PREFERRED_H = 768;
 #define PREFERRED_VY 4096
 #define PREFERRED_B 32
 
@@ -90,7 +90,7 @@ int abs(int x) {
     return x;
 }
 
-void draw_line(int32_t x0, int32_t x1, int32_t y0, int32_t y1, uint32_t color) {
+void draw_line(int32_t x0, int32_t y0, int32_t x1, int32_t y1, uint32_t color) {
 	int deltax = abs(x1 - x0);
 	int deltay = abs(y1 - y0);
 	int sx = (x0 < x1) ? 1 : -1;
@@ -112,12 +112,31 @@ void draw_line(int32_t x0, int32_t x1, int32_t y0, int32_t y1, uint32_t color) {
 		}
 	}
 }
+void draw_rectangle(int32_t x, int32_t y, int32_t w, int32_t h, uint32_t color) {
+    draw_line(x, y, x+w, y, color);
+    draw_line(x, y, x, y+h, color);
+    draw_line(x, y+h, x+w, y+h, color);
 
+    draw_line(x+w, y, x+w, y+h, color);
+}
 static void set_point(int x, int y, uint32_t value) {
 	uint32_t * disp = (uint32_t *)lfb_vid_memory;
 	uint32_t * cell = &disp[y * (lfb_resolution_s / 4) + x];
 	*cell = value;
 }
+
+void draw_fill(uint16_t x0, uint16_t y0, uint16_t width, uint16_t height, uint32_t color) {
+	for (uint16_t y = y0; y <= y0+height; ++y) {
+		for (uint16_t x = x0; x <= x0+ width; ++x) {
+			GFX(x, y) = color;
+		}
+	}
+}
+
+typedef struct position {
+    uint16_t x;
+    uint16_t y;
+} position_t;
 
 int
 lbf_video_ioctl(struct inode* ip, int req, void* arg) {
@@ -140,10 +159,14 @@ lbf_video_ioctl(struct inode* ip, int req, void* arg) {
         *((uintptr_t *)arg) = lfb_memsize;
         return 1;
     } else if (req == 7) {
-        draw_line(0, 400, 0, 400, rgb(200, 11, 22));
-        draw_line(400, 0, 0, 400, rgb(120, 111, 122));
-        return 1;
+        position_t* p = (position_t*)arg;
+        int x = p->x;
+        int y = p->y;
+        // background
+        draw_fill(0, 0, PREFERRED_W, PREFERRED_H, rgb(255,255,255));
+        draw_rectangle(x, y, 400, 300, rgb(255,0,0));
     }
+
     return -1;
 }
 

@@ -103,12 +103,20 @@ void draw_line(context_t * ctx, int32_t x0, int32_t x1, int32_t y0, int32_t y1, 
 	}
 }
 
+typedef struct position {
+    uint16_t x;
+    uint16_t y;
+} position_t;
+
 int
 main(int argc, char* argv[])
 {
     int fd;
     context_t ctx;
-    uint32_t color;
+    //uint32_t color;
+    position_t p;
+    p.x = 10;
+    p.y = 10;
 
     fd = open("/dev/fb0", O_RDWR);
     if (fd < 0) {
@@ -117,10 +125,11 @@ main(int argc, char* argv[])
     }
 
     init_context(fd, &ctx);
-    color = rgb(222,0,0);
+    //color = rgb(222,0,0);
 
     //draw_line(&ctx, 0, 400, 0, 400, color);
-    ioctl(fd, 7, &color);
+    int flag = 1;
+    ioctl(fd, 7, &p);
 
     close(fd);
     exit();

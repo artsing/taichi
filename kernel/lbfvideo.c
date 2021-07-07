@@ -116,9 +116,9 @@ void draw_rectangle(int32_t x, int32_t y, int32_t w, int32_t h, uint32_t color) 
     draw_line(x, y, x+w, y, color);
     draw_line(x, y, x, y+h, color);
     draw_line(x, y+h, x+w, y+h, color);
-
     draw_line(x+w, y, x+w, y+h, color);
 }
+
 static void set_point(int x, int y, uint32_t value) {
 	uint32_t * disp = (uint32_t *)lfb_vid_memory;
 	uint32_t * cell = &disp[y * (lfb_resolution_s / 4) + x];
@@ -162,9 +162,22 @@ lbf_video_ioctl(struct inode* ip, int req, void* arg) {
         position_t* p = (position_t*)arg;
         int x = p->x;
         int y = p->y;
-        // background
-        draw_fill(0, 0, PREFERRED_W, PREFERRED_H, rgb(255,255,255));
-        draw_rectangle(x, y, 400, 300, rgb(255,0,0));
+
+        static int x0, y0;
+        static int flag = 0;
+
+        if (flag == 0) {
+            // background
+            draw_fill(0, 0, PREFERRED_W, PREFERRED_H, rgb(255,255,255));
+            flag = 1;
+        }
+
+        draw_fill(x0, y0, 40, 40, rgb(255,255,255));
+        draw_fill(x, y, 40, 40, rgb(55,155,255));
+        //draw_rectangle(x, y, 40, 40, rgb(255,0,0));
+        x0 = x;
+        y0 = y;
+
     }
 
     return -1;

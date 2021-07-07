@@ -129,7 +129,27 @@ main(int argc, char* argv[])
 
     //draw_line(&ctx, 0, 400, 0, 400, color);
     int flag = 1;
-    ioctl(fd, 7, &p);
+    int k = 0;
+    for (int x = 1; x < 100000; x++) {
+        ioctl(fd, 7, &p);
+        if (p.x > 500 || p.y > 500) {
+            k = 1;
+        }
+
+        if (p.x < 10 || p.y < 10) {
+            k = 0;
+        }
+
+        if (k == 0) {
+            p.x += 1;
+            p.y += 1;
+        } else {
+            p.x -= 1;
+            p.y -= 1;
+        }
+        printf(1, "\r{%d, %d}", p.x, p.y);
+        sleep(1);
+    }
 
     close(fd);
     exit();

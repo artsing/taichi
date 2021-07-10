@@ -80,7 +80,7 @@ void init_context(int fd, context_t* ctx) {
            ctx->buffer);
 }
 
-void draw_line(context_t * ctx, int32_t x0, int32_t x1, int32_t y0, int32_t y1, uint32_t color) {
+void draw_line(context_t * ctx, int32_t x0, int32_t y0, int32_t x1, int32_t y1, uint32_t color) {
 	int deltax = abs(x1 - x0);
 	int deltay = abs(y1 - y0);
 	int sx = (x0 < x1) ? 1 : -1;
@@ -103,6 +103,22 @@ void draw_line(context_t * ctx, int32_t x0, int32_t x1, int32_t y0, int32_t y1, 
 	}
 }
 
+void draw_rectangle(context_t *ctx, int32_t x, int32_t y, int32_t w, int32_t h, uint32_t color) {
+    draw_line(ctx, x, y, x+w, y, color);
+    draw_line(ctx, x, y, x, y+h, color);
+    draw_line(ctx, x, y+h, x+w, y+h, color);
+    draw_line(ctx, x+w, y, x+w, y+h, color);
+}
+
+void draw_fill(context_t *ctx, uint16_t x0, uint16_t y0, uint16_t width, uint16_t height, uint32_t color) {
+	for (uint16_t y = y0; y <= y0+height; ++y) {
+		for (uint16_t x = x0; x <= x0+ width; ++x) {
+			GFX(ctx, x, y) = color;
+		}
+	}
+}
+
+
 typedef struct position {
     uint16_t x;
     uint16_t y;
@@ -113,7 +129,7 @@ main(int argc, char* argv[])
 {
     int fd;
     context_t ctx;
-    //uint32_t color;
+    uint32_t color, green, red;
     position_t p;
     p.x = 10;
     p.y = 10;
@@ -125,13 +141,18 @@ main(int argc, char* argv[])
     }
 
     init_context(fd, &ctx);
-    //color = rgb(222,0,0);
+    color = rgb(255, 255, 255);
+    green = rgb(0, 255, 0);
+    red = rgb(255, 0, 0);
+    // draw background
+    draw_fill(&ctx, 0, 0, ctx.width, ctx.height, color);
+    draw_rectangle(&ctx, p.x-2, p.y-2, 541, 541, green);
 
-    //draw_line(&ctx, 0, 400, 0, 400, color);
     int flag = 1;
     int k = 0;
-    for (int x = 1; x < 100000; x++) {
-        ioctl(fd, 7, &p);
+    for (int x = 1; x < 1000; x++) {
+        //ioctl(fd, 7, &p);
+        draw_fill(&ctx, p.x, p.y, 40, 40, color);
         if (p.x > 500 || p.y > 500) {
             k = 1;
         }
@@ -147,6 +168,8 @@ main(int argc, char* argv[])
             p.x -= 1;
             p.y -= 1;
         }
+
+        draw_fill(&ctx, p.x, p.y, 40, 40, red);
         printf(1, "\r{%d, %d}", p.x, p.y);
         sleep(1);
     }

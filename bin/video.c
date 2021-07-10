@@ -12,6 +12,10 @@ int abs(int a) {
     }
 }
 
+static inline uint16_t min16(uint16_t a, uint16_t b) {
+	return (a < b) ? a : b;
+}
+
 typedef struct context_s {
 	uint16_t width;
 	uint16_t height;
@@ -30,12 +34,52 @@ typedef struct context_s {
 #define _ALP(color) ((color & 0xFF000000) / 0x1000000)
 
 /*
- * Macros make verything easier.
+ * Macros make everything easier.
  */
 #define GFX(ctx,x,y) *((uint32_t *)&((ctx)->buffer)[(GFX_W(ctx) * (y) + (x)) * GFX_B(ctx)])
 
-uint32_t rgb(uint8_t r, uint8_t g, uint8_t b) {
-	return 0xFF000000 + (r * 0x10000) + (g * 0x100) + (b * 0x1);
+inline uint32_t rgb(uint8_t r, uint8_t g, uint8_t b) {
+	return 0xFF000000 | (r << 16) | (g << 8) | (b);
+}
+
+inline uint32_t rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
+	return (a << 24U) | (r << 16) | (g << 8) | (b);
+}
+
+uint32_t alpha_blend(uint32_t bottom, uint32_t top, uint32_t mask) {
+	uint8_t a = _RED(mask);
+	uint8_t red = (_RED(bottom) * (255 - a) + _RED(top) * a) / 255;
+	uint8_t gre = (_GRE(bottom) * (255 - a) + _GRE(top) * a) / 255;
+	uint8_t blu = (_BLU(bottom) * (255 - a) + _BLU(top) * a) / 255;
+	uint8_t alp = (int)a + (int)_ALP(bottom) > 255 ? 255 : a + _ALP(bottom);
+	return rgba(red,gre,blu, alp);
+}
+
+#define DONT_USE_FLOAT_FOR_ALPHA 1
+
+uint32_t alpha_blend_rgba(uint32_t bottom, uint32_t top) {
+	if (_ALP(bottom) == 0) return top;
+	if (_ALP(top) == 255) return top;
+	if (_ALP(top) == 0) return bottom;
+#if DONT_USE_FLOAT_FOR_ALPHA
+	uint16_t a = _ALP(top);
+	uint16_t c = 255 - a;
+	uint16_t b = ((int)_ALP(bottom) * c) / 255;
+	uint16_t alp = min16(a + b, 255);
+	uint16_t red = min16((uint32_t)(_RED(bottom) * c + _RED(top) * 255) / 255, 255);
+	uint16_t gre = min16((uint32_t)(_GRE(bottom) * c + _GRE(top) * 255) / 255, 255);
+	uint16_t blu = min16((uint32_t)(_BLU(bottom) * c + _BLU(top) * 255) / 255, 255);
+	return rgba(red,gre,blu,alp);
+#else
+	double a = _ALP(top) / 255.0;
+	double c = 1.0 - a;
+	double b = (_ALP(bottom) / 255.0) * c;
+	double alp = a + b; if (alp > 1.0) alp = 1.0;
+	double red = (_RED(bottom) / 255.0) * c + (_RED(top) / 255.0); if (red > 1.0) red = 1.0;
+	double gre = (_GRE(bottom) / 255.0) * c + (_GRE(top) / 255.0); if (gre > 1.0) gre = 1.0;
+	double blu = (_BLU(bottom) / 255.0) * c + (_BLU(top) / 255.0); if (blu > 1.0) blu = 1.0;
+	return rgba(red * 255, gre * 255, blu * 255, alp * 255);
+#endif
 }
 
 void init_context(int fd, context_t* ctx) {
@@ -124,15 +168,38 @@ typedef struct position {
     uint16_t y;
 } position_t;
 
-int
-main(int argc, char* argv[])
-{
+void color_test() {
     int fd;
     context_t ctx;
-    uint32_t color, green, red;
+    uint32_t bg_color, top_color;
+    int x = 10, y = 10, len = 64;
+
+    fd = open("/dev/fb0", O_RDWR);
+    if (fd < 0) {
+        printf(2, "open /dev/fb0 failed.\n");
+        exit();
+    }
+
+    init_context(fd, &ctx);
+
+    bg_color = rgb(255, 255, 255);
+    draw_fill(&ctx, 0, 0, ctx.width, ctx.height, bg_color);
+
+    for (int i = 25; i<=255; i+=25) {
+        top_color = rgba(12, 255, 0, i);
+        draw_fill(&ctx, x + (len + 5)* (i/25-1) , y, len, len, alpha_blend_rgba(bg_color, top_color));
+    }
+
+    close(fd);
+}
+
+void moving_block() {
+    int fd;
+    context_t ctx;
+    uint32_t color, green, block_cr;
     position_t p;
-    p.x = 10;
-    p.y = 10;
+    p.x = 11;
+    p.y = 11;
 
     fd = open("/dev/fb0", O_RDWR);
     if (fd < 0) {
@@ -143,22 +210,24 @@ main(int argc, char* argv[])
     init_context(fd, &ctx);
     color = rgb(255, 255, 255);
     green = rgb(0, 255, 0);
-    red = rgb(255, 0, 0);
+    block_cr = rgb(255, 0, 0);
     // draw background
     draw_fill(&ctx, 0, 0, ctx.width, ctx.height, color);
-    draw_rectangle(&ctx, p.x-2, p.y-2, 541, 541, green);
+    draw_rectangle(&ctx, p.x-2, p.y-2, 300, 300, green);
 
     int flag = 1;
     int k = 0;
     for (int x = 1; x < 1000; x++) {
         //ioctl(fd, 7, &p);
-        draw_fill(&ctx, p.x, p.y, 40, 40, color);
-        if (p.x > 500 || p.y > 500) {
+        draw_fill(&ctx, p.x, p.y, 20, 20, color);
+        if (p.x > 300-17 || p.y > 300-17) {
             k = 1;
+            block_cr = rgb(0, 0, 255);
         }
 
-        if (p.x < 10 || p.y < 10) {
+        if (p.x < 11 || p.y < 11) {
             k = 0;
+            block_cr = rgb(255, 0, 0);
         }
 
         if (k == 0) {
@@ -169,11 +238,18 @@ main(int argc, char* argv[])
             p.y -= 1;
         }
 
-        draw_fill(&ctx, p.x, p.y, 40, 40, red);
+        draw_fill(&ctx, p.x, p.y, 20, 20, block_cr);
         printf(1, "\r{%d, %d}", p.x, p.y);
         sleep(1);
     }
 
     close(fd);
+}
+
+int
+main(int argc, char* argv[])
+{
+    //moving_block();
+    color_test();
     exit();
 }

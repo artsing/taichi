@@ -83,16 +83,13 @@ rgb(uint8_t r, uint8_t g, uint8_t b) {
 	return 0xFF000000 + (r * 0x10000) + (g * 0x100) + (b * 0x1);
 }
 
-int abs(int x) {
-    if (x < 0) {
-        return -x;
-    }
-    return x;
+int _abs(int x) {
+    return x > 0 ? x:-x;
 }
 
 void draw_line(int32_t x0, int32_t y0, int32_t x1, int32_t y1, uint32_t color) {
-	int deltax = abs(x1 - x0);
-	int deltay = abs(y1 - y0);
+	int deltax = _abs(x1 - x0);
+	int deltay = _abs(y1 - y0);
 	int sx = (x0 < x1) ? 1 : -1;
 	int sy = (y0 < y1) ? 1 : -1;
 	int error = deltax - deltay;

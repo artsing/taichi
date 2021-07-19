@@ -1,16 +1,9 @@
 #include "types.h"
 #include "user.h"
 #include "fcntl.h"
+#include <math.h>
 
 #define N 7
-
-int abs(int a) {
-    if (a < 0) {
-        return -a;
-    } else {
-        return a;
-    }
-}
 
 static inline uint16_t min16(uint16_t a, uint16_t b) {
 	return (a < b) ? a : b;
@@ -125,8 +118,8 @@ void init_context(int fd, context_t* ctx) {
 }
 
 void draw_line(context_t * ctx, int32_t x0, int32_t y0, int32_t x1, int32_t y1, uint32_t color) {
-	int deltax = abs(x1 - x0);
-	int deltay = abs(y1 - y0);
+	int deltax = fabs(x1 - x0);
+	int deltay = fabs(y1 - y0);
 	int sx = (x0 < x1) ? 1 : -1;
 	int sy = (y0 < y1) ? 1 : -1;
 	int error = deltax - deltay;
@@ -249,7 +242,7 @@ void moving_block() {
 int
 main(int argc, char* argv[])
 {
-    //moving_block();
+    moving_block();
     color_test();
     exit();
 }

@@ -56,6 +56,25 @@ memset(void *dst, int c, uint n)
   return dst;
 }
 
+void*
+memcpy(void *dst, void *src, size_t n)
+{
+    movsb(dst, src, n);
+    return dst;
+}
+
+void* 
+memrchr(const void * m, char c, size_t n) {
+	const unsigned char * s = m;
+	c = (unsigned char)c;
+	while (n--) {
+		if (s[n] == c) {
+			return (void*)(s+n);
+		}
+	}
+	return 0;
+}
+
 char*
 strchr(const char *s, char c)
 {
@@ -63,6 +82,11 @@ strchr(const char *s, char c)
     if(*s == c)
       return (char*)s;
   return 0;
+}
+
+char* 
+strrchr(const char * s, char c) {
+	return memrchr(s, c, strlen(s) + 1);
 }
 
 char*

@@ -184,7 +184,8 @@ kernelmemfs: $(MEMFSOBJS) entry.o entryother initcode kernel.ld fs.img
 $(KERNEL)/vectors.S: $(TOOLS)/vectors.pl
 	perl $(TOOLS)/vectors.pl > $(KERNEL)/vectors.S
 
-ULIB = $(BUILD_LIB)/ulib.o $(BUILD_LIB)/usys.o $(BUILD_LIB)/printf.o $(BUILD_LIB)/umalloc.o
+ULIB = $(BUILD_LIB)/ulib.o $(BUILD_LIB)/usys.o $(BUILD_LIB)/printf.o $(BUILD_LIB)/umalloc.o \
+       $(BUILD_LIB)/math.o $(BUILD_LIB)/inflate.o #$(BUILD_LIB)/graphics.o $(BUILD_LIB)/png.o
 
 $(BUILD_LIB)/%.o: $(LIB)/%.c
 	@mkdir -p build build/lib

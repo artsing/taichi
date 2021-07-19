@@ -1,5 +1,6 @@
-#include "math.h"
+#include <math.h>
 #include "types.h"
+#include "user.h"
 
 #if 0
 extern char * _argv_0;

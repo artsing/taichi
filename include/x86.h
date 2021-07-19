@@ -57,6 +57,14 @@ stosl(void *addr, int data, int cnt)
                "memory", "cc");
 }
 
+static inline void
+movsb(void* dst, void* src, size_t n) {
+	asm volatile("cld; rep movsb"
+	            : "=c"((int){0})
+	            : "D"(dst), "S"(src), "c"(n)
+	            : "flags", "memory");
+}
+
 struct segdesc;
 
 static inline void

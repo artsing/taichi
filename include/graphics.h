@@ -1,6 +1,6 @@
 #pragma once
 
-#include "types.h"
+#include <stdint.h>
 #include "user.h"
 
 #define GFX_W(ctx)  ((ctx)->width)			/* Display width */

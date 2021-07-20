@@ -1,4 +1,7 @@
-#pragma once
+#ifndef _STDLIB_H_
+#define _STDLIB_H_
+
+#include <stddef.h>
 
 //extern void exit(int status);
 extern char * getenv(const char *name);
@@ -51,8 +54,8 @@ extern void *bsearch(const void *key, const void *base, size_t nmemb, size_t siz
 extern char * mktemp(char *);
 extern int mkstemp(char *);
 
-//extern size_t mbstowcs(wchar_t *dest, const char *src, size_t n);
-//extern size_t wcstombs(char * dest, const wchar_t *src, size_t n);
+extern size_t mbstowcs(wchar_t *dest, const char *src, size_t n);
+extern size_t wcstombs(char * dest, const wchar_t *src, size_t n);
 
 typedef struct { int quot; int rem; } div_t;
 typedef struct { long int quot; long int rem; } ldiv_t;
@@ -65,3 +68,4 @@ extern ldiv_t ldiv(long numerator, long denominator);
 #define NAME_MAX 255
 extern char *realpath(const char *path, char *resolved_path);
 
+#endif /* _STDLIB_H_ */

@@ -79,7 +79,11 @@ typedef uint32_t physaddr_t;
 typedef uint32_t ppn_t;
 
 // size_t is used for memory object sizes.
+#ifndef __SIZE_T__
+#define __SIZE_T__ uint32_t
 typedef uint32_t size_t;
+#endif
+
 // ssize_t is a signed version of ssize_t, used in case there might be an
 // error return.
 typedef int32_t ssize_t;
@@ -88,7 +92,10 @@ typedef int32_t ssize_t;
 typedef int32_t off_t;
 
 // variable-length arguments list.
+#ifndef __VA_LIST__
+#define __VA_LIST__
 typedef __builtin_va_list va_list;
+#endif
 
 // Efficient min and max operations
 #define MIN(_a, _b)						\
@@ -121,7 +128,10 @@ typedef __builtin_va_list va_list;
 #define ARRAY_SIZE(a)	(sizeof(a) / sizeof(a[0]))
 
 // Return the offset of 'member' relative to the beginning of a struct type
+#ifndef __OFFSETOF__
+#define __OFFSETOF__
 #define offsetof(type, member)  ((size_t) (&((type*)0)->member))
+#endif
 
 /* for Protocol Stack */
 

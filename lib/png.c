@@ -97,7 +97,7 @@ static uint8_t _get(struct inflate_context * ctx) {
 			/* This isn't an IDAT? That's wrong! */
 			fprintf(stderr, "And this is the wrong type (0x%x), I'm just bailing.\n", type);
 			fprintf(stderr, "size read was 0x%x\n", size);
-			exit(0);
+			exit();
 		}
 	}
 

@@ -1,7 +1,9 @@
+#include <stdio.h>
 #include "graphics.h"
 #include "fcntl.h"
 #include "video.h"
 #include "math.h"
+#include "png.h"
 
 static inline int32_t min(int32_t a, int32_t b) {
 	return (a < b) ? a : b;
@@ -395,13 +397,13 @@ static char * extension_from_filename(char * filename) {
 int load_sprite(sprite_t * sprite, char * filename) {
 	static int librariesLoaded = 0;
 	if (!librariesLoaded) {
-		_load_format_libraries();
+		//_load_format_libraries();
 	}
 
 	char * ext = extension_from_filename(filename);
 
 	if (!strcmp(ext,"png") || !strcmp(ext,"sdf")) return load_sprite_png(sprite, filename);
-	if (!strcmp(ext,"jpg") || !strcmp(ext,"jpeg")) return load_sprite_jpg(sprite, filename);
+	//if (!strcmp(ext,"jpg") || !strcmp(ext,"jpeg")) return load_sprite_jpg(sprite, filename);
 
 	/* Fall back to bitmap */
 	return load_sprite_bmp(sprite, filename);

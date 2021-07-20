@@ -1,10 +1,9 @@
 #pragma once
 
-#include <_cheader.h>
-#include <stddef.h>
+//#include <stddef.h>
 #include <va_list.h>
+#include "types.h"
 
-_Begin_C_Header
 
 typedef struct _FILE FILE;
 #define __DEFINED_FILE
@@ -37,7 +36,7 @@ extern int fflush(FILE * stream);
 extern int vasprintf(char ** buf, const char *fmt, va_list args);
 extern int sprintf(char *buf, const char *fmt, ...);
 extern int fprintf(FILE *stream, const char *fmt, ...);
-extern int printf(const char *fmt, ...);
+//extern int printf(const char *fmt, ...);
 extern int snprintf(char * buf, size_t size, const char * fmt, ...);
 extern int vsprintf(char * buf, const char *fmt, va_list args);
 extern int vsnprintf(char * buf, size_t size, const char *fmt, va_list args);
@@ -94,4 +93,3 @@ typedef long fpos_t;
 extern int fgetpos(FILE *stream, fpos_t *pos);
 extern int fsetpos(FILE *stream, const fpos_t *pos);
 
-_End_C_Header;

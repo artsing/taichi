@@ -1,11 +1,6 @@
 #pragma once
 
-#include <_cheader.h>
-#include <stddef.h>
-
-_Begin_C_Header
-
-extern void exit(int status);
+//extern void exit(int status);
 extern char * getenv(const char *name);
 
 extern void *malloc(size_t size);
@@ -48,7 +43,7 @@ extern void abort(void);
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1
 
-#define NULL 0
+//#define NULL 0
 
 extern void *bsearch(const void *key, const void *base, size_t nmemb, size_t size,
 	int (*compar)(const void *, const void *));
@@ -56,8 +51,8 @@ extern void *bsearch(const void *key, const void *base, size_t nmemb, size_t siz
 extern char * mktemp(char *);
 extern int mkstemp(char *);
 
-extern size_t mbstowcs(wchar_t *dest, const char *src, size_t n);
-extern size_t wcstombs(char * dest, const wchar_t *src, size_t n);
+//extern size_t mbstowcs(wchar_t *dest, const char *src, size_t n);
+//extern size_t wcstombs(char * dest, const wchar_t *src, size_t n);
 
 typedef struct { int quot; int rem; } div_t;
 typedef struct { long int quot; long int rem; } ldiv_t;
@@ -70,4 +65,3 @@ extern ldiv_t ldiv(long numerator, long denominator);
 #define NAME_MAX 255
 extern char *realpath(const char *path, char *resolved_path);
 
-_End_C_Header

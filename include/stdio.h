@@ -5,92 +5,177 @@
 #include <stddef.h>
 #include <stdarg.h>
 
-typedef struct _FILE FILE;
-#define __DEFINED_FILE
+/* The possibilities for the third argument to `setvbuf'.  */
+#define _IOFBF 0		/* Fully buffered.  */
+#define _IOLBF 1		/* Line buffered.  */
+#define _IONBF 2		/* No buffering.  */
 
-#define BUFSIZ 8192
+/* Default buffer size.  */
+#define	BUFSIZ 8192
 
-FILE * stdin;
-FILE * stdout;
-FILE * stderr;
+/* End of file character.
+   Some things throughout the library rely on this being -1.  */
+#define	EOF	(-1)
 
-#define EOF (-1)
+/* The possibilities for the third argument to `fseek'.
+   These values should not be changed.  */
+#define	SEEK_SET	0	/* Seek from beginning of file.  */
+#define	SEEK_CUR	1	/* Seek from current position.  */
+#define	SEEK_END	2	/* Seek from end of file.  */
 
-#define SEEK_SET 0
-#define SEEK_CUR 1
-#define SEEK_END 2
-
-FILE * fopen(const char *path, const char *mode);
-int fclose(FILE * stream);
-int fseek(FILE * stream, long offset, int whence);
-long ftell(FILE * stream);
-FILE * fdopen(int fd, const char *mode);
-FILE * freopen(const char *path, const char *mode, FILE * stream);
-
-size_t fread(void *ptr, size_t size, size_t nmemb, FILE * stream);
-size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE * stream);
-
-int fileno(FILE * stream);
-int fflush(FILE * stream);
-
-int vasprintf(char ** buf, const char *fmt, va_list args);
-int sprintf(char *buf, const char *fmt, ...);
-int fprintf(FILE *stream, const char *fmt, ...);
-//int printf(const char *fmt, ...);
-int snprintf(char * buf, size_t size, const char * fmt, ...);
-int vsprintf(char * buf, const char *fmt, va_list args);
-int vsnprintf(char * buf, size_t size, const char *fmt, va_list args);
-int vfprintf(FILE * device, const char *format, va_list ap);
-int vprintf(const char *format, va_list ap);
-
-int puts(const char *s);
-int fputs(const char *s, FILE *stream);
-int fputc(int c, FILE *stream);
-int putc(int c, FILE *stream);
-int putchar(int c);
-int fgetc(FILE *stream);
-int getc(FILE *stream);
-char *fgets(char *s, int size, FILE *stream);
-int getchar(void);
-
-void rewind(FILE *stream);
-void setbuf(FILE * stream, char * buf);
-
-void perror(const char *s);
-
-int ungetc(int c, FILE * stream);
-
-int feof(FILE * stream);
-void clearerr(FILE * stream);
-int ferror(FILE * stream);
-
-char * strerror(int errnum);
-
-int _fwouldblock(FILE * stream);
-
-FILE * tmpfile(void);
-
-int setvbuf(FILE * stream, char * buf, int mode, size_t size);
-
-int remove(const char * pathname);
-int rename(const char * oldpath, const char * newpath);
-
-#define _IONBF 0
-#define _IOLBF 1
-#define _IOFBF 2
-
-char * tmpnam(char * s);
-#define L_tmpnam 256
-
-int vsscanf(const char *str, const char *format, va_list ap);
-int sscanf(const char *str, const char *format, ...);
-int vfscanf(FILE * stream, const char *format, va_list ap);
-int fscanf(FILE *stream, const char *format, ...);
-int scanf(const char *format, ...);
-
+typedef struct __stdio_file FILE;
 typedef long fpos_t;
 
-int fgetpos(FILE *stream, fpos_t *pos);
-int fsetpos(FILE *stream, const fpos_t *pos);
+/* Standard streams.  */
+extern FILE *stdin;		/* Standard input stream.  */
+extern FILE *stdout;	/* Standard output stream.  */
+extern FILE *stderr;	/* Standard error output stream.  */
+
+/* C89/C99 say they're macros.  Make them happy.  */
+#define stdin stdin
+#define stdout stdout
+#define stderr stderr
+
+/**
+ * Open a file and create a new stream for it.
+ */
+extern FILE *fopen (const char *filename, const char *mode);
+
+/**
+ * Open a file, replacing an existing stream with it.
+ */
+extern FILE *freopen (const char *filename, const char *modes, FILE *stream);
+
+/**
+ * Create a new stream that refers to an existing system file descriptor.
+ */
+extern FILE *fdopen (int __fd, const char *__modes);
+
+/**
+ * Close STREAM.
+ */
+extern int fclose (FILE *stream);
+
+/* Remove file FILENAME.  */
+extern int remove (const char *filename);
+
+/* Rename file OLD to NEW.  */
+extern int rename (const char *__old, const char *__new);
+
+/**
+ * Seek to a certain position on STREAM.
+ */
+extern int fseek (FILE *stream, long int offset, int whence);
+
+/**
+ * Return the current position of STREAM.
+ */
+extern long int ftell (FILE *stream);
+
+/**
+ * Flush STREAM, or all streams if STREAM is NULL.
+ */
+extern int fflush (FILE *stream);
+
+/**
+ * Rewind to the beginning of STREAM.
+ */
+extern void rewind (FILE *stream);
+
+/**
+ * Read a character from STREAM.
+ */
+extern int fgetc (FILE *stream);
+extern int getc (FILE *stream);
+
+/**
+ * Write a character to STREAM.
+ */
+extern int fputc (int c, FILE *stream);
+extern int putc (int c, FILE *stream);
+
+/**
+ * Write a string to STREAM.
+ */
+extern int fputs (const char *s, FILE *stream);
+
+/**
+ * Write a string, followed by a newline, to stdout.
+ */
+extern int puts (const char *s);
+
+/**
+ * Push a character back onto the input buffer of STREAM.
+ */
+extern int ungetc (int c, FILE *stream);
+
+
+/**
+ * Read chunks of generic data from STREAM.
+ */
+extern size_t fread (void *ptr, size_t size, size_t n, FILE *stream);
+
+/**
+ * Write chunks of generic data to STREAM.
+ */
+extern size_t fwrite (const void *ptr, size_t size, size_t n, FILE *s);
+
+/**
+ * If BUF is NULL, make STREAM unbuffered.
+ * Else make it use buffer BUF, of size BUFSIZ.
+ */
+extern void setbuf (FILE *stream, char *buf);
+
+/**
+ * Make STREAM use buffering mode MODE.
+ * If BUF is not NULL, use N bytes of it for buffering;
+ * else allocate an internal buffer N bytes long.
+ */
+extern int setvbuf (FILE *stream, char *buf, int modes, size_t n);
+
+/**
+ * Clear the error and EOF indicators for STREAM.
+ */
+extern void clearerr (FILE *stream);
+
+/**
+ * Return the EOF indicator for STREAM.
+ */
+extern int feof (FILE *stream);
+
+/**
+ * Return the error indicator for STREAM.
+ */
+extern int ferror (FILE *stream);
+
+/**
+ * Get STREAM's position.
+ */
+extern int fgetpos(FILE *stream, fpos_t *pos);
+
+/**
+ * Set STREAM's position.
+ */
+extern int fsetpos(FILE *stream, const fpos_t *pos);
+
+/**
+ * Create a temporary file and open it read/write.
+ */
+extern FILE *tmpfile (void);
+
+/**
+ * Generate a temporary filename.
+ */
+extern char *tmpnam (char *s);
+
+/**
+ * Read a character from stdin.
+ */
+extern int getchar (void);
+
+/**
+ * Write a character to stdout.
+ */
+extern int putchar (int c);
 
 #endif /* _STDIO_H_ */

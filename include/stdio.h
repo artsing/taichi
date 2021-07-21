@@ -4,8 +4,6 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdarg.h>
-#include <param.h>
-#include <fs.h>
 
 /* The possibilities for the third argument to `setvbuf'.  */
 #define _IOFBF 0		/* Fully buffered.  */
@@ -26,13 +24,13 @@
 #define	SEEK_END	2	/* Seek from end of file.  */
 
 /* Maximum number of files that can be open at once. */
-#define FOPEN_MAX NFILE
+#define FOPEN_MAX 100 
 
 /* Maximum length of a filename. */
-#define FILENAME_MAX DIRSIZ
+#define FILENAME_MAX 14
 
 /* temp file */
-#define L_tmpnam DIRSIZ
+#define L_tmpnam 14
 #define TMP_MAX 10
 
 typedef struct __stdio_file FILE;

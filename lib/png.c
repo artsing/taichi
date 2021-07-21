@@ -1,8 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "graphics.h"
-#include "inflate.h"
+#include <graphics.h>
+#include <inflate.h>
 
 /**
  * Read 32-bit big-endian value from file.
@@ -95,8 +94,8 @@ static uint8_t _get(struct inflate_context * ctx) {
 
 		if (type != PNG_IDAT) {
 			/* This isn't an IDAT? That's wrong! */
-			fprintf(stderr, "And this is the wrong type (0x%x), I'm just bailing.\n", type);
-			fprintf(stderr, "size read was 0x%x\n", size);
+			//fprintf(stderr, "And this is the wrong type (0x%x), I'm just bailing.\n", type);
+			//fprintf(stderr, "size read was 0x%x\n", size);
 			exit();
 		}
 	}
@@ -106,7 +105,9 @@ static uint8_t _get(struct inflate_context * ctx) {
 	int i = fgetc(c->f);
 
 	/* If this was EOF, we should handle that error case... probably... */
-	if (i < 0) fprintf(stderr, "This is probably not good.\n");
+	if (i < 0) {
+		//fprintf(stderr, "This is probably not good.\n");
+	}
 
 	return i;
 }
@@ -366,7 +367,7 @@ static int color_type_has_alpha(int c) {
 int load_sprite_png(sprite_t * sprite, char * filename) {
 	FILE * f = fopen(filename,"r");
 	if (!f) {
-		fprintf(stderr, "Failed to open file %s\n", filename);
+		//fprintf(stderr, "Failed to open file %s\n", filename);
 		return 1;
 	}
 
@@ -375,7 +376,7 @@ int load_sprite_png(sprite_t * sprite, char * filename) {
 	for (int i = 0; i < 8; ++i) {
 		unsigned char c = fgetc(f);
 		if (c != sig[i]) {
-			fprintf(stderr, "byte %d (%d) does not match expected (%d)\n", i, c, sig[i]);
+			//fprintf(stderr, "byte %d (%d) does not match expected (%d)\n", i, c, sig[i]);
 			goto _error;
 		}
 	}
@@ -441,12 +442,12 @@ int load_sprite_png(sprite_t * sprite, char * filename) {
 					unsigned int cflags = fgetc(f);
 					if ((cflags & 0xF) != 8) {
 						/* Compression type must be 8 */
-						fprintf(stderr, "Expected flags to be 8 but it's 0x%x\n", cflags);
+						//fprintf(stderr, "Expected flags to be 8 but it's 0x%x\n", cflags);
 						return 1;
 					}
 					unsigned int aflags = fgetc(f);
 					if (aflags & (1 << 5)) {
-						fprintf(stderr, "There are preset bytes and I don't know what to do.\n");
+						//fprintf(stderr, "There are preset bytes and I don't know what to do.\n");
 						return 1;
 					}
 

@@ -185,7 +185,7 @@ $(KERNEL)/vectors.S: $(TOOLS)/vectors.pl
 	perl $(TOOLS)/vectors.pl > $(KERNEL)/vectors.S
 
 ULIB = $(BUILD_LIB)/ulib.o $(BUILD_LIB)/usys.o $(BUILD_LIB)/printf.o $(BUILD_LIB)/umalloc.o \
-       $(BUILD_LIB)/math.o $(BUILD_LIB)/inflate.o $(BUILD_LIB)/graphics.o $(BUILD_LIB)/png.o
+       $(BUILD_LIB)/math.o $(BUILD_LIB)/inflate.o $(BUILD_LIB)/stdio.o $(BUILD_LIB)/graphics.o #$(BUILD_LIB)/png.o
 
 $(BUILD_LIB)/%.o: $(LIB)/%.c
 	@mkdir -p build build/lib
@@ -239,14 +239,10 @@ UPROGS=\
 	$(BUILD_BIN)/_uthread\
 	$(BUILD_BIN)/_usertests\
 	$(BUILD_BIN)/_zombie\
-	$(BUILD_BIN)/_video\
-	
-NET_PROGS=\
-	  $(BUILD_BIN)/_ifconfig\
-	  $(BUILD_BIN)/_tcpechoserver\
-	  $(BUILD_BIN)/_udpechoserver\
+	$(BUILD_BIN)/_tcpechoserver\
+	$(BUILD_BIN)/_udpechoserver\
+	$(BUILD_BIN)/_ifconfig
 
-UPROGS += $(NET_PROGS)
 
 $(BUILD)/fs.img: $(BUILD)/mkfs README.org $(UPROGS)
 	./$(BUILD)/mkfs $(BUILD)/fs.img README.org $(UPROGS)

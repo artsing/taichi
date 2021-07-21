@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _SYS_TYPES_H_
+#define _SYS_TYPES_H_
 
 typedef unsigned int   uint;
 typedef unsigned short ushort;
@@ -138,5 +139,7 @@ typedef __builtin_va_list va_list;
 typedef uint32_t ip_addr_t;
 
 typedef int32_t time_t;
+
+#endif
 
 #endif

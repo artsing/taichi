@@ -1,10 +1,12 @@
-#pragma once
-
+#ifndef _USER_H_
+#define _USER_H_
 struct stat;
 struct rtcdate;
 struct sockaddr;
 
 // system calls
+#ifndef _SYSCALL_
+#define _SYSCALL_
 int fork(void);
 int exit(void) __attribute__((noreturn));
 int wait(void);
@@ -37,8 +39,11 @@ int recv(int, char*, int);
 int send(int, char*, int);
 int recvfrom(int, char*, int, struct sockaddr*, int*);
 int sendto(int, char*, int, struct sockaddr*, int);
+#endif /*_SYSCALL_*/
 
 // ulib.c
+#ifndef _ULIB_
+#define _ULIB_
 int stat(const char*, struct stat*);
 char* strcpy(char*, const char*);
 char* strcat_s(char *dest, char *right, int max_len);
@@ -65,3 +70,6 @@ int ip_addr_pton(const char *p, ip_addr_t *n);
 
 #define IP_ADDR_LEN 4
 #define IP_ADDR_STR_LEN 16 /* "ddd.ddd.ddd.ddd\0" */
+#endif /*_ULIB_*/
+
+#endif /*_USER_H_*/

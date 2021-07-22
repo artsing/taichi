@@ -15,7 +15,22 @@ strcpy(char *s, const char *t)
   return os;
 }
 
-char* strcat_s(char *dest, char *right, int max_len) {
+char*
+strncpy(char* s, const char* t, int n)
+{
+    char* os;
+
+    os = s;
+    while (n-- > 0 && (*s++ = *t++) != 0)
+        ;
+    while (n-- > 0)
+        *s++ = 0;
+    return os;
+}
+
+char*
+strcat_s(char *dest, char *right, int max_len)
+{
     int writing = -1;
     for(int i = 0; i !=max_len; i++){
         if(writing < 0 && dest[i] == 0){

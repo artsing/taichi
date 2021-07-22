@@ -24,7 +24,7 @@
 #define	SEEK_END	2	/* Seek from end of file.  */
 
 /* Maximum number of files that can be open at once. */
-#define FOPEN_MAX 100 
+#define FOPEN_MAX 100
 
 /* Maximum length of a filename. */
 #define FILENAME_MAX 14

@@ -117,6 +117,21 @@ fileread(struct file *f, char *addr, int n)
   panic("fileread");
 }
 
+// Seek file f
+int
+fileseek(struct file *f, int offset) {
+    if (f->readable == 0) {
+        return -1;
+    }
+
+    if (f->type == FD_INODE) {
+         f->off += offset;
+         return f->off;
+    }
+
+    return -100;
+}
+
 //PAGEBREAK!
 // Write to file f.
 int

@@ -39,6 +39,9 @@ int recv(int, char*, int);
 int send(int, char*, int);
 int recvfrom(int, char*, int, struct sockaddr*, int*);
 int sendto(int, char*, int, struct sockaddr*, int);
+
+int seek(int, int);
+
 #endif /*_SYSCALL_*/
 
 // ulib.c
@@ -46,6 +49,7 @@ int sendto(int, char*, int, struct sockaddr*, int);
 #define _ULIB_
 int stat(const char*, struct stat*);
 char* strcpy(char*, const char*);
+char* strncpy(char* s, const char* t, int n);
 char* strcat_s(char *dest, char *right, int max_len);
 void *memmove(void*, const void*, int);
 char* strchr(const char*, char c);

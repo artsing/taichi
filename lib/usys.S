@@ -40,3 +40,6 @@ SYSCALL(recv)
 SYSCALL(send)
 SYSCALL(recvfrom)
 SYSCALL(sendto)
+
+# seek
+SYSCALL(seek)

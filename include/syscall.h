@@ -31,3 +31,5 @@
 #define SYS_send     29
 #define SYS_recvfrom 30
 #define SYS_sendto   31
+
+#define SYS_seek     32

@@ -4,55 +4,32 @@
 
 struct __stdio_file
 {
-    int flags;
-    char *buffer;		/* Base of buffer.  */
-    size_t bufsize;		/* Size of the buffer.  */
-
     int fd;
-    char* name;
+    int readable;
 };
 
+static FILE stdin_const = {0, 0};
+static FILE stdout_const = {1, 0};
+static FILE stderr_const = {2, 0};
+/*
+FILE *stdin = &stdin_const;
+FILE *stdout = &stdout_const;
+FILE *stderr = &stdout_const;
+*/
 /**
  * Open a file and create a new stream for it.
  */
-FILE *fopen (const char *filename, const char *mode) {
-    int fd;
-    int flags = O_RDONLY;
-    FILE* file;
-
-    if (filename == NULL || mode == NULL) {
-        return NULL;
+FILE *fopen(const char *restrict filename, const char *restrict mode) {
+    int omode = O_RDWR; //HACK
+    if(mode == 0){
+        omode = O_RDONLY;
     }
+    char fname[2048]; //HACK
+    int fd = open(strncpy(&fname[0], filename, 2048), omode);
+    FILE *result = malloc(sizeof(FILE));
+    result->fd = fd;
 
-    if (mode[0] == 'r') {
-        flags = O_RDONLY;
-    } else if(mode[0] == 'w'){
-        flags = O_WRONLY;
-    } else {
-        fd = O_RDWR;
-    }
-
-    fd = open(filename, flags);
-    if (fd < 0) {
-        return NULL;
-    }
-
-    file = malloc(sizeof(FILE));
-    if (file < 0) {
-        return NULL;
-    }
-
-    file->fd = fd;
-    strcpy(file->name, filename);
-    file->buffer = malloc(sizeof(BUFSIZ));
-    if (file->buffer < 0) {
-        free(file);
-        close(fd);
-        return NULL;
-    }
-    file->bufsize = BUFSIZ;
-
-    return file;
+    return result;
 }
 
 /**
@@ -72,12 +49,8 @@ FILE *fdopen (int __fd, const char *__modes) {
 /**
  * Close STREAM.
  */
-int fclose (FILE *stream) {
-    free(stream->buffer);
-    free(stream);
-
-    close(stream->fd);
-    return 1;
+int fclose(FILE *f) {
+    return close(f->fd);
 }
 
 /* Remove file FILENAME.  */
@@ -93,15 +66,26 @@ int rename (const char *__old, const char *__new) {
 /**
  * Seek to a certain position on STREAM.
  */
-int fseek (FILE *stream, long int offset, int whence) {
-    return -1;
+int fseek(FILE *stream, long offset, int whence) {
+    if(whence == SEEK_CUR){
+        int result = seek(stream->fd, offset);
+        if(result < 0){
+            return -1;
+        }
+        return 0;
+    }
+    return -1; //not supported at the moment
 }
 
 /**
  * Return the current position of STREAM.
  */
-long int ftell (FILE *stream) {
-    return -1;
+long ftell(FILE *stream) {
+    int result = seek(stream->fd, 0);
+    if(result < 0){
+        return -1;
+    }
+    return result;
 }
 
 /**
@@ -121,21 +105,66 @@ void rewind (FILE *stream) {
 /**
  * Read a character from STREAM.
  */
-int fgetc (FILE *stream) {
-    return -1;
+int fgetc(FILE *stream) {
+    if(stream->readable == -1){
+        return EOF;
+    }
+    unsigned char buf = EOF;
+    stream->readable = read(stream->fd, &buf, sizeof(buf)) == sizeof(buf) ? 1 : -1;
+    if(stream->readable == -1){
+        return EOF;
+    }
+    return (int)buf;
 }
-int getc (FILE *stream) {
-    return -1;
+int getc(FILE *stream) {
+    if(stream->readable == -1){
+        return EOF;
+    }
+    unsigned char buf = EOF;
+    stream->readable = read(stream->fd, &buf, sizeof(buf)) == sizeof(buf) ? 1 : -1;
+    if(stream->readable == -1){
+        return EOF;
+    }
+    return (int)buf;
+}
+
+char *fgets(char *restrict buf, int n, FILE *restrict stream) {
+    /*
+        The fgets( ) function shall read bytes from stream into the array pointed to by s, until n−1 bytes
+        are read, or a <newline> is read and transferred to s, or an end-of-file condition is encountered.
+        The string is then terminated with a null byte.
+        -- POSIX Base Definitions, Issue 6 - page 368
+    */
+
+    for(int i = 0; i != (n - 1); i++){
+        int c = fgetc(stream);
+        if(c == EOF){
+            buf[i] = '\0';
+            break;
+        }
+        buf[i] = (char)c;
+        buf[i+1] = '\0'; //this only is safe because we're looping until n-1
+
+        if(c == '\n'){
+            //unlike the test for EOF, we want to
+            //copy the newline to the output buffer
+            //before we conclude.
+            break;
+        }
+    }
+    return buf;
 }
 
 /**
  * Write a character to STREAM.
  */
-int fputc (int c, FILE *stream) {
-    return -1;
+int fputc (int c, FILE *f) {
+    write(f->fd, &c, 1);
+    return 1;
 }
-int putc (int c, FILE *stream) {
-    return -1;
+int putc (int c, FILE *f) {
+    write(f->fd, &c, 1);
+    return 1;
 }
 
 /**
@@ -164,14 +193,14 @@ int ungetc (int c, FILE *stream) {
  * Read chunks of generic data from STREAM.
  */
 size_t fread (void *ptr, size_t size, size_t n, FILE *stream) {
-    return 0;
+    return -1;
 }
 
 /**
  * Write chunks of generic data to STREAM.
  */
 size_t fwrite (const void *ptr, size_t size, size_t n, FILE *s) {
-    return 0;
+    return -1;
 }
 
 /**

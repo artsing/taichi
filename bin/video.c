@@ -1,8 +1,9 @@
-#include "types.h"
-#include "user.h"
-#include "fcntl.h"
+#include <stdint.h>
 #include <math.h>
 #include <graphics.h>
+#include "user.h"
+#include "fcntl.h"
+#include <png.h>
 
 #define N 7
 
@@ -19,6 +20,7 @@ void init_context(int fd, gfx_context_t* ctx) {
     if (err < 0) {
         printf(2, "ioctl /dev/fb0 failed.\n");
     }
+    ctx->stride = ctx->width * 4;
 
     err = ioctl(fd, 2, &(ctx->height));
     if (err < 0) {
@@ -30,7 +32,7 @@ void init_context(int fd, gfx_context_t* ctx) {
         printf(2, "ioctl /dev/fb0 failed.\n");
     }
 
-    err = ioctl(fd, 5, &(ctx->buffer));
+    err = ioctl(fd, 5, &(ctx->backbuffer));
     if (err < 0) {
         printf(2, "ioctl /dev/fb0 failed.\n");
     }
@@ -40,44 +42,48 @@ void init_context(int fd, gfx_context_t* ctx) {
         printf(2, "ioctl /dev/fb0 failed.\n");
     }
 
+    ctx->clips = NULL;
+
     printf(1, "ctx ={width:%d, height:%d, depth:%d, size:%d, buffer:%x}\n",
            ctx->width,
            ctx->height,
            ctx->depth,
            ctx->size,
-           ctx->buffer);
+           ctx->backbuffer);
 }
 
 typedef struct position {
     uint16_t x;
     uint16_t y;
 } position_t;
-/*
+
 void color_test() {
     int fd;
-    context_t ctx;
-    uint32_t bg_color, top_color;
-    int x = 10, y = 10, len = 64;
+    gfx_context_t ctx;
+    uint32_t bg_color;
 
     fd = open("/dev/fb0", O_RDWR);
     if (fd < 0) {
         printf(2, "open /dev/fb0 failed.\n");
         exit();
     }
+    printf(1, "fd = %d \n", fd);
 
     init_context(fd, &ctx);
 
     bg_color = rgb(255, 255, 255);
-    draw_fill(&ctx, 0, 0, ctx.width, ctx.height, bg_color);
+    draw_fill(&ctx, bg_color);
 
-    for (int i = 25; i<=255; i+=25) {
-        top_color = rgba(12, 255, 0, i);
-        draw_fill(&ctx, x + (len + 5)* (i/25-1) , y, len, len, alpha_blend_rgba(bg_color, top_color));
-    }
+    sprite_t *png = create_sprite(64, 64, 100);
+
+    int err = load_sprite_png(png, "favicon.png");
+    printf(1, "err = %d\n", err);
+
+    draw_sprite(&ctx, png, 10, 10);
 
     close(fd);
 }
-
+/*
 void moving_block() {
     int fd;
     context_t ctx;
@@ -135,6 +141,6 @@ int
 main(int argc, char* argv[])
 {
  //   moving_block();
- //   color_test();
+    color_test();
     exit();
 }

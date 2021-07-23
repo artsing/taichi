@@ -202,8 +202,8 @@ size_t fread (void *ptr, size_t size, size_t n, FILE *stream) {
 /**
  * Write chunks of generic data to STREAM.
  */
-size_t fwrite (const void *ptr, size_t size, size_t n, FILE *s) {
-    return -1;
+size_t fwrite (const void *ptr, size_t size, size_t n, FILE *stream) {
+    return write(stream->fd, ptr, size*n);
 }
 
 /**
@@ -287,6 +287,3 @@ int getchar (void) {
 int putchar (int c) {
     return -1;
 }
-
-
-

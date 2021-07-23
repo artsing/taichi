@@ -243,10 +243,11 @@ UPROGS=\
 	$(BUILD_BIN)/_udpechoserver\
 	$(BUILD_BIN)/_ifconfig\
 	$(BUILD_BIN)/_stdfile\
+	$(BUILD_BIN)/_video\
 
 
 $(BUILD)/fs.img: $(BUILD)/mkfs README.org $(UPROGS)
-	./$(BUILD)/mkfs $(BUILD)/fs.img README.org $(UPROGS)
+	./$(BUILD)/mkfs $(BUILD)/fs.img README.org favicon.png $(UPROGS)
 
 -include *.d
 

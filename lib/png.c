@@ -365,18 +365,19 @@ static int color_type_has_alpha(int c) {
 }
 
 int load_sprite_png(sprite_t * sprite, char * filename) {
-	FILE * f = fopen(filename,"r");
+	FILE * f = fopen(filename, 0);
 	if (!f) {
-		//fprintf(stderr, "Failed to open file %s\n", filename);
+		printf(2, "Failed to open file %s\n", filename);
 		return 1;
 	}
+    printf(1, "open file %s\n", filename);
 
 	/* Read the PNG signature */
 	unsigned char sig[] = {137, 80, 78, 71, 13, 10, 26, 10};
 	for (int i = 0; i < 8; ++i) {
 		unsigned char c = fgetc(f);
 		if (c != sig[i]) {
-			//fprintf(stderr, "byte %d (%d) does not match expected (%d)\n", i, c, sig[i]);
+			printf(2, "byte %d (%d) does not match expected (%d)\n", i, c, sig[i]);
 			goto _error;
 		}
 	}
@@ -394,14 +395,18 @@ int load_sprite_png(sprite_t * sprite, char * filename) {
 		/* read chunks */
 		unsigned int size = read_32(f);
 		unsigned int type = read_32(f);
+        printf(1, "size = %d, type = %d\n", size, type);
 
 		if (feof(f)) break;
 
 		switch (type) {
 			case PNG_IHDR:
 				{
+
+                    printf(1, "IHDR: \n");
 					/* Image should only have one IHDR */
 					if (c.seen_ihdr) return 1;
+
 
 					c.seen_ihdr = 1;
 					c.width = read_32(f); /* 4 */
@@ -413,14 +418,14 @@ int load_sprite_png(sprite_t * sprite, char * filename) {
 					c.interlace = fgetc(f); /* 13 */
 
 					/* Invalid / non-standard compression and filter types */
-					if (c.compression != 0) return 1;
-					if (c.filter != 0) return 1;
+					if (c.compression != 0) return -1;
+					if (c.filter != 0) return -2;
 
 					/* 0 for none, 1 for Adam7 */
-					if (c.interlace != 0 && c.interlace != 1) return 1;
+					if (c.interlace != 0 && c.interlace != 1) return -3;
 
-					if (c.bit_depth != 8) return 1; /* Sorry */
-					if (c.color_type < 0 || c.color_type > 6 || (c.color_type & 1)) return 1; /* Sorry, no indexed support */
+					if (c.bit_depth != 8) return -4; /* Sorry */
+					if (c.color_type < 0 || c.color_type > 6 || (c.color_type & 1)) return -5; /* Sorry, no indexed support */
 
 					/* Allocate space */
 					sprite->width  = c.width;
@@ -438,6 +443,8 @@ int load_sprite_png(sprite_t * sprite, char * filename) {
 
 			case PNG_IDAT:
 				{
+
+                    printf(1, "IDAT: \n");
 					/* First two bytes of IDAT data are ZLIB header */
 					unsigned int cflags = fgetc(f);
 					if ((cflags & 0xF) != 8) {
@@ -461,6 +468,7 @@ int load_sprite_png(sprite_t * sprite, char * filename) {
 					c.size = size - 2; /* 2 for the bytes we already read */
 
 					deflate_decompress(&ctx);
+                    printf(1,"defalt ok \n");
 
 					/* The IDATs contain a ZLIB stream, so they end with an
 					 * adler32 checksum. Skip that. */
@@ -470,11 +478,12 @@ int load_sprite_png(sprite_t * sprite, char * filename) {
 				break;
 			case PNG_IEND:
 				/* We don't actually have anything to do here. */
+                printf(1, "IEND: \n");
 				break;
 			default:
 				/* IHDR must be first */
 				if (!c.seen_ihdr) return 1;
-				//fprintf(stderr, "I don't know what this is! %4s 0x%x\n", reorder_type(type), type);
+				printf(1, "I don't know what this is! %4s 0x%x\n", reorder_type(type), type);
 				/* Skip */
 				for (unsigned int i = 0; i < size; ++i) fgetc(f);
 				break;
@@ -493,6 +502,7 @@ int load_sprite_png(sprite_t * sprite, char * filename) {
 			SPRITE(sprite,x,y) = premultiply(SPRITE(sprite,x,y));
 		}
 	}
+    printf(1, "ok\n");
 
 	return 0;
 

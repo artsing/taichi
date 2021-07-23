@@ -26,6 +26,10 @@ FILE *fopen(const char *restrict filename, const char *restrict mode) {
     }
     char fname[2048]; //HACK
     int fd = open(strncpy(&fname[0], filename, 2048), omode);
+    if (fd < 0) {
+        return NULL;
+    }
+
     FILE *result = malloc(sizeof(FILE));
     result->fd = fd;
 

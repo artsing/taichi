@@ -153,7 +153,6 @@ main(int argc, char *argv[])
         if (!strncmp(argv[i], "build/bin/", 10)){
             argv[i] += 10;
         }
-        printf("1. %s \n", argv[i]);
 
         if(argv[i][0] == '_') {
             ++argv[i];
@@ -169,10 +168,7 @@ main(int argc, char *argv[])
         strncpy(de.name, argv[i], DIRSIZ);
         iappend(ino, &de, sizeof(de));
 
-        printf("2. %s \n", de.name);
         while((cc = read(fd, buf, sizeof(buf))) > 0) {
-            printf("3. %s \n", de.name);
-
             iappend(inum, buf, cc);
         }
 
@@ -342,5 +338,4 @@ iappend(uint inum, void *xp, int n)
   }
   din.size = xint(off);
   winode(inum, &din);
-  printf("end\n");
 }

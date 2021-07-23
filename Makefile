@@ -185,7 +185,7 @@ $(KERNEL)/vectors.S: $(TOOLS)/vectors.pl
 	perl $(TOOLS)/vectors.pl > $(KERNEL)/vectors.S
 
 ULIB = $(BUILD_LIB)/ulib.o $(BUILD_LIB)/usys.o $(BUILD_LIB)/printf.o $(BUILD_LIB)/umalloc.o \
-       $(BUILD_LIB)/math.o $(BUILD_LIB)/inflate.o $(BUILD_LIB)/stdio.o $(BUILD_LIB)/graphics.o #$(BUILD_LIB)/png.o
+       $(BUILD_LIB)/math.o $(BUILD_LIB)/inflate.o $(BUILD_LIB)/stdio.o $(BUILD_LIB)/graphics.o $(BUILD_LIB)/png.o
 
 $(BUILD_LIB)/%.o: $(LIB)/%.c
 	@mkdir -p build build/lib
@@ -206,8 +206,8 @@ $(BUILD_BIN)/_%: $(BUILD_BIN)/%.o $(ULIB)
 	$(OBJDUMP) -t $@ | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $(BUILD_BIN)/$*.sym
 
 $(BUILD_BIN)/_forktest: $(BUILD_BIN)/forktest.o $(ULIB)
-	# forktest has less library code linked in - needs to be small
-	# in order to be able to max out the proc table.
+    # forktest has less library code linked in - needs to be small
+    # in order to be able to max out the proc table.
 	@mkdir -p build build/bin
 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $(BUILD_BIN)/forktest.o $(BUILD_LIB)/ulib.o $(BUILD_LIB)/usys.o
 	$(OBJDUMP) -S $@ > $(BUILD_BIN)/forktest.asm
@@ -241,7 +241,8 @@ UPROGS=\
 	$(BUILD_BIN)/_zombie\
 	$(BUILD_BIN)/_tcpechoserver\
 	$(BUILD_BIN)/_udpechoserver\
-	$(BUILD_BIN)/_ifconfig
+	$(BUILD_BIN)/_ifconfig\
+	$(BUILD_BIN)/_stdfile\
 
 
 $(BUILD)/fs.img: $(BUILD)/mkfs README.org $(UPROGS)

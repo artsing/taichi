@@ -40,7 +40,7 @@ int send(int, char*, int);
 int recvfrom(int, char*, int, struct sockaddr*, int*);
 int sendto(int, char*, int, struct sockaddr*, int);
 
-int seek(int, int);
+int seek(int, int, int);
 
 #endif /*_SYSCALL_*/
 

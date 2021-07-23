@@ -79,15 +79,17 @@ sys_read(void)
     return fileread(f, p, n);
 }
 
-int sys_seek(void) {
+int
+sys_seek(void) {
     struct file *f;
     int offset;
+    int whence;
 
-    if (argfd(0, 0, &f) < 0 || argint(1, &offset) < 0) {
+    if (argfd(0, 0, &f) < 0 || argint(1, &offset) < 0 || argint(2, &whence)) {
         return -1;
     }
 
-    return fileseek(f, offset);
+    return fileseek(f, offset, whence);
 }
 
 int

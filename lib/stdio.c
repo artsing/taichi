@@ -71,21 +71,20 @@ int rename (const char *__old, const char *__new) {
  * Seek to a certain position on STREAM.
  */
 int fseek(FILE *stream, long offset, int whence) {
-    if(whence == SEEK_CUR){
-        int result = seek(stream->fd, offset);
-        if(result < 0){
-            return -1;
-        }
-        return 0;
+    if (whence != SEEK_SET
+        && whence != SEEK_CUR
+        && whence != SEEK_END) {
+        return -1;
     }
-    return -1; //not supported at the moment
+
+    return seek(stream->fd, offset, whence);
 }
 
 /**
  * Return the current position of STREAM.
  */
 long ftell(FILE *stream) {
-    int result = seek(stream->fd, 0);
+    int result = seek(stream->fd, 0, SEEK_CUR);
     if(result < 0){
         return -1;
     }
@@ -197,7 +196,7 @@ int ungetc (int c, FILE *stream) {
  * Read chunks of generic data from STREAM.
  */
 size_t fread (void *ptr, size_t size, size_t n, FILE *stream) {
-    return -1;
+    return read(stream->fd, ptr, size * n);
 }
 
 /**

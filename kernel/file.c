@@ -119,15 +119,25 @@ fileread(struct file *f, char *addr, int n)
 
 // Seek file f
 int
-fileseek(struct file *f, int offset) {
+fileseek(struct file *f, int offset, int whence) {
     if (f->readable == 0) {
         return -1;
     }
 
     if (f->type == FD_INODE) {
-         f->off += offset;
-         return f->off;
-    }
+        if (whence == F_SEEK_SET) {
+            f->off = 0;
+            return 0;
+        } else if (whence == F_SEEK_CUR) {
+            f->off += offset;
+            return f->off;
+        } else if (whence == F_SEEK_END) {
+            f->off = f->ip->size;
+                return f->off;
+            } else {
+                return -2;
+            }
+        }
 
     return -100;
 }

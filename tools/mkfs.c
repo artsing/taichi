@@ -128,7 +128,6 @@ main(int argc, char *argv[])
     strcpy(de.name, "..");
     iappend(rootino, &de, sizeof(de));
 
-
     bin_ino = mkdir(rootino, "bin");
     ino = mkdir(rootino, "home");
     mkdir(rootino, "usr");

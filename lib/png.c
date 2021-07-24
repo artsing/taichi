@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <stdlib.h>
+//#include <stdlib.h>
 #include <graphics.h>
 #include <inflate.h>
 
@@ -466,9 +466,9 @@ int load_sprite_png(sprite_t * sprite, char * filename) {
 					ctx.ring = NULL; /* use builtin */
 
 					c.size = size - 2; /* 2 for the bytes we already read */
-
+                    printf(1,"defalt start \n");
 					deflate_decompress(&ctx);
-                    printf(1,"defalt ok \n");
+                    printf(1,"defalt end \n");
 
 					/* The IDATs contain a ZLIB stream, so they end with an
 					 * adler32 checksum. Skip that. */

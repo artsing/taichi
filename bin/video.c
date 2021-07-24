@@ -52,12 +52,7 @@ void init_context(int fd, gfx_context_t* ctx) {
            ctx->backbuffer);
 }
 
-typedef struct position {
-    uint16_t x;
-    uint16_t y;
-} position_t;
-
-void color_test() {
+void png_test() {
     int fd;
     gfx_context_t ctx;
     uint32_t bg_color;
@@ -74,73 +69,32 @@ void color_test() {
     bg_color = rgb(255, 255, 255);
     draw_fill(&ctx, bg_color);
 
-    sprite_t *png = create_sprite(64, 64, 100);
-
-    int err = load_sprite_png(png, "favicon.png");
-    printf(1, "err = %d\n", err);
-
-    draw_sprite(&ctx, png, 10, 10);
-
-    close(fd);
-}
-/*
-void moving_block() {
-    int fd;
-    context_t ctx;
-    uint32_t color, green, block_cr;
-    position_t p;
-    p.x = 11;
-    p.y = 11;
-
-    fd = open("/dev/fb0", O_RDWR);
-    if (fd < 0) {
-        printf(2, "open /dev/fb0 failed.\n");
-        exit();
+    sprite_t *sprite = create_sprite(1024, 768, 100);
+    int err = load_sprite_png(sprite, "favicon.png");
+    if (err < 0) {
+        printf(1, "err = %d\n", err);
+        close(fd);
+        return;
     }
 
-    init_context(fd, &ctx);
-    color = rgb(255, 255, 255);
-    green = rgb(0, 255, 0);
-    block_cr = rgb(255, 0, 0);
-    // draw background
-    draw_fill(&ctx, 0, 0, ctx.width, ctx.height, color);
-    draw_rectangle(&ctx, p.x-2, p.y-2, 300, 300, green);
-
-    int flag = 1;
-    int k = 0;
-    for (int x = 1; x < 1000; x++) {
-        //ioctl(fd, 7, &p);
-        draw_fill(&ctx, p.x, p.y, 20, 20, color);
-        if (p.x > 300-17 || p.y > 300-17) {
-            k = 1;
-            block_cr = rgb(0, 0, 255);
+    //draw_sprite_scaled(&ctx, sprite, 0, 0, 100, 100);
+    /*
+    for (int i=0; i<1000; i += 10) {
+        draw_fill(&ctx, bg_color);
+        draw_sprite_rotate(&ctx, sprite, 200, 200, i, 1);
+        sleep(30);
+        if (i==360) {
+            i = 0;
         }
-
-        if (p.x < 11 || p.y < 11) {
-            k = 0;
-            block_cr = rgb(255, 0, 0);
-        }
-
-        if (k == 0) {
-            p.x += 1;
-            p.y += 1;
-        } else {
-            p.x -= 1;
-            p.y -= 1;
-        }
-
-        draw_fill(&ctx, p.x, p.y, 20, 20, block_cr);
-        printf(1, "\r{%d, %d}", p.x, p.y);
-        sleep(1);
     }
-
+    */
+    draw_sprite(&ctx, sprite, 0, 0);
     close(fd);
 }
-*/
+
 int
 main(int argc, char* argv[])
 {
- //   moving_block();
-    color_test();
+    png_test();
     exit();
 }

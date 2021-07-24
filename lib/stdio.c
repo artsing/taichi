@@ -233,9 +233,13 @@ void clearerr (FILE *stream) {
 /**
  * Return the EOF indicator for STREAM.
  */
-int feof (FILE *stream) {
-    return -1;
+int feof(FILE *stream) {
+    if(stream->readable == -1){
+        return EOF;
+    }
+    return 0;
 }
+
 
 /**
  * Return the error indicator for STREAM.

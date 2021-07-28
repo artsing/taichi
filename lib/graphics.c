@@ -660,6 +660,7 @@ void draw_line_thick(gfx_context_t * ctx, int32_t x0, int32_t x1, int32_t y0, in
 	}
 }
 
+
 void draw_fill(gfx_context_t * ctx, uint32_t color) {
 	for (uint16_t y = 0; y < ctx->height; ++y) {
 		for (uint16_t x = 0; x < ctx->width; ++x) {

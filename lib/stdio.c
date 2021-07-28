@@ -11,20 +11,23 @@ struct __stdio_file
 static FILE stdin_const = {0, 0};
 static FILE stdout_const = {1, 0};
 static FILE stderr_const = {2, 0};
+
 /*
 FILE *stdin = &stdin_const;
 FILE *stdout = &stdout_const;
 FILE *stderr = &stdout_const;
 */
+
 /**
  * Open a file and create a new stream for it.
  */
 FILE *fopen(const char *restrict filename, const char *restrict mode) {
-    int omode = O_RDWR; //HACK
+    int omode = O_RDWR;
     if(mode == 0){
         omode = O_RDONLY;
     }
-    char fname[2048]; //HACK
+
+    char fname[2048];
     int fd = open(strncpy(&fname[0], filename, 2048), omode);
     if (fd < 0) {
         return NULL;
@@ -132,13 +135,6 @@ int getc(FILE *stream) {
 }
 
 char *fgets(char *restrict buf, int n, FILE *restrict stream) {
-    /*
-        The fgets( ) function shall read bytes from stream into the array pointed to by s, until n−1 bytes
-        are read, or a <newline> is read and transferred to s, or an end-of-file condition is encountered.
-        The string is then terminated with a null byte.
-        -- POSIX Base Definitions, Issue 6 - page 368
-    */
-
     for(int i = 0; i != (n - 1); i++){
         int c = fgetc(stream);
         if(c == EOF){

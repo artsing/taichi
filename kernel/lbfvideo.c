@@ -13,8 +13,8 @@
 #include "x86.h"
 
 
-static int PREFERRED_W = 1024;
-static int PREFERRED_H = 768;
+static int PREFERRED_W = 1440;
+static int PREFERRED_H = 900;
 #define PREFERRED_VY 4096
 #define PREFERRED_B 32
 
@@ -36,8 +36,6 @@ size_t lfb_memsize = 0xFF0000;
 const char * lfb_driver_name = "bochs";
 
 uintptr_t lfb_bochs_mmio = 0;
-
-#define GFX(x,y) *((uint32_t *)&(lfb_vid_memory)[((lfb_resolution_x) * (y) + (x)) * (lfb_resolution_b/8)])
 
 static void bochs_mmio_out(int off, uint16_t val) {
 	*(volatile uint16_t*)(lfb_bochs_mmio + 0x500 + off) = val;
@@ -78,63 +76,6 @@ lbf_video_write(struct inode *ip, char *buf, int n)
     return 0;
 }
 
-uint32_t
-rgb(uint8_t r, uint8_t g, uint8_t b) {
-	return 0xFF000000 + (r * 0x10000) + (g * 0x100) + (b * 0x1);
-}
-
-int _abs(int x) {
-    return x > 0 ? x:-x;
-}
-
-void draw_line(int32_t x0, int32_t y0, int32_t x1, int32_t y1, uint32_t color) {
-	int deltax = _abs(x1 - x0);
-	int deltay = _abs(y1 - y0);
-	int sx = (x0 < x1) ? 1 : -1;
-	int sy = (y0 < y1) ? 1 : -1;
-	int error = deltax - deltay;
-	while (1) {
-		if (x0 >= 0 && y0 >= 0 && x0 < lfb_resolution_x && y0 < lfb_resolution_y) {
-			GFX(x0, y0) = color;
-		}
-		if (x0 == x1 && y0 == y1) break;
-		int e2 = 2 * error;
-		if (e2 > -deltay) {
-			error -= deltay;
-			x0 += sx;
-		}
-		if (e2 < deltax) {
-			error += deltax;
-			y0 += sy;
-		}
-	}
-}
-void draw_rectangle(int32_t x, int32_t y, int32_t w, int32_t h, uint32_t color) {
-    draw_line(x, y, x+w, y, color);
-    draw_line(x, y, x, y+h, color);
-    draw_line(x, y+h, x+w, y+h, color);
-    draw_line(x+w, y, x+w, y+h, color);
-}
-
-static void set_point(int x, int y, uint32_t value) {
-	uint32_t * disp = (uint32_t *)lfb_vid_memory;
-	uint32_t * cell = &disp[y * (lfb_resolution_s / 4) + x];
-	*cell = value;
-}
-
-void draw_fill(uint16_t x0, uint16_t y0, uint16_t width, uint16_t height, uint32_t color) {
-	for (uint16_t y = y0; y <= y0+height; ++y) {
-		for (uint16_t x = x0; x <= x0+ width; ++x) {
-			GFX(x, y) = color;
-		}
-	}
-}
-
-typedef struct position {
-    uint16_t x;
-    uint16_t y;
-} position_t;
-
 int
 lbf_video_ioctl(struct inode* ip, int req, void* arg) {
     if (req == 1) {
@@ -155,29 +96,9 @@ lbf_video_ioctl(struct inode* ip, int req, void* arg) {
     } else if (req == 6) {
         *((uintptr_t *)arg) = lfb_memsize;
         return 1;
-    } else if (req == 7) {
-        position_t* p = (position_t*)arg;
-        int x = p->x;
-        int y = p->y;
-
-        static int x0, y0;
-        static int flag = 0;
-
-        if (flag == 0) {
-            // background
-            draw_fill(0, 0, PREFERRED_W, PREFERRED_H, rgb(255,255,255));
-            flag = 1;
-        }
-
-        draw_fill(x0, y0, 40, 40, rgb(255,255,255));
-        draw_fill(x, y, 40, 40, rgb(55,155,255));
-        //draw_rectangle(x, y, 40, 40, rgb(255,0,0));
-        x0 = x;
-        y0 = y;
-
+    } else {
+        return -1;
     }
-
-    return -1;
 }
 
 int

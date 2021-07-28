@@ -155,16 +155,16 @@ main(int argc, char *argv[])
             argv[i] += 10;
         }
 
+        int ino = share_ino;
         if (!strncmp(argv[i], "resources/", 10)) {
-            argv[i] += 10;
-            ino = share_ino;
+            
+        }
+
+        if(argv[i][0] == '_') {
+            ++argv[i];
+            ino = bin_ino;  // 放于/bin目录
         } else {
-            if(argv[i][0] == '_') {
-                ++argv[i];
-                ino = bin_ino;  // 放于/bin目录
-            } else {
-                ino = rootino;  // README.org放于/目录
-            }
+            ino = rootino;  // README.org放于/目录
         }
 
         inum = ialloc(T_FILE);

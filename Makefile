@@ -185,7 +185,8 @@ $(KERNEL)/vectors.S: $(TOOLS)/vectors.pl
 	perl $(TOOLS)/vectors.pl > $(KERNEL)/vectors.S
 
 ULIB = $(BUILD_LIB)/ulib.o $(BUILD_LIB)/usys.o $(BUILD_LIB)/printf.o $(BUILD_LIB)/umalloc.o \
-       $(BUILD_LIB)/math.o $(BUILD_LIB)/inflate.o $(BUILD_LIB)/stdio.o $(BUILD_LIB)/graphics.o $(BUILD_LIB)/png.o
+       $(BUILD_LIB)/math.o $(BUILD_LIB)/inflate.o $(BUILD_LIB)/stdio.o $(BUILD_LIB)/graphics.o \
+	   $(BUILD_LIB)/png.o $(BUILD_LIB)/jpeg.o
 
 $(BUILD_LIB)/%.o: $(LIB)/%.c
 	@mkdir -p build build/lib
@@ -246,8 +247,21 @@ UPROGS=\
 	$(BUILD_BIN)/_video\
 
 
-$(BUILD)/fs.img: $(BUILD)/mkfs README.org $(UPROGS)
-	./$(BUILD)/mkfs $(BUILD)/fs.img README.org favicon.png $(UPROGS)
+RES = resources/bg.jpg\
+      resources/favicon.png\
+      resources/ul.png\
+      resources/um.png\
+      resources/ur.png\
+      resources/ml.png\
+      resources/mr.png\
+      resources/ll.png\
+      resources/lm.png\
+      resources/lr.png\
+      resources/bt-close.png\
+      resources/bt-max.png
+
+$(BUILD)/fs.img: $(BUILD)/mkfs README.org $(UPROGS) $(RES)
+	./$(BUILD)/mkfs $(BUILD)/fs.img README.org $(UPROGS) $(RES)
 
 -include *.d
 

@@ -69,7 +69,9 @@ int
 main(int argc, char *argv[])
 {
     int i, cc, fd;
-    uint rootino, inum, bin_ino, share_ino, ino, off;
+    uint rootino, inum, bin_ino, ino, off;
+    uint share_ino, active_ino, inactive_ino, fonts_ino;
+    uint cursor_ino;
     struct dirent de;
     char buf[BSIZE];
     struct dinode din;
@@ -134,6 +136,10 @@ main(int argc, char *argv[])
 
     ino = mkdir(rootino, "usr");
     share_ino = mkdir(ino, "share");
+    active_ino = mkdir(share_ino, "active");
+    inactive_ino = mkdir(share_ino, "inactive");
+    fonts_ino = mkdir(share_ino, "fonts");
+    cursor_ino = mkdir(share_ino, "cursor");
 
     mkdir(rootino, "dev");
     mkdir(rootino, "etc");
@@ -155,7 +161,19 @@ main(int argc, char *argv[])
             argv[i] += 10;
         }
 
-        if (!strncmp(argv[i], "resources/", 10)) {
+        if (!strncmp(argv[i], "resources/active/", 17)) {
+            argv[i] += 17;
+            ino = active_ino;
+        } else if (!strncmp(argv[i], "resources/inactive/", 19)) {
+            argv[i] += 19;
+            ino = inactive_ino;
+        } else if (!strncmp(argv[i], "resources/fonts/", 16)) {
+            argv[i] += 16;
+            ino = fonts_ino;
+        } else if (!strncmp(argv[i], "resources/cursor/", 17)) {
+            argv[i] += 17;
+            ino = cursor_ino;
+        } else if (!strncmp(argv[i], "resources/", 10)) {
             argv[i] += 10;
             ino = share_ino;
         } else {

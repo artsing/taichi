@@ -5,6 +5,7 @@
 #include "fcntl.h"
 #include <png.h>
 #include <jpeg.h>
+#include <sdf.h>
 
 void init_context(int fd, gfx_context_t* ctx);
 
@@ -24,6 +25,7 @@ static int lr_width = 9;
 void color_test();
 void png_test();
 void jpg_test();
+void sdf_test();
 void win_test(int x, int y, int width, int height, int decors_active);
 void draw_fill_pos(gfx_context_t * ctx, int x0, int y0, uint32_t color);
 
@@ -35,6 +37,10 @@ main(int argc, char* argv[])
     // jpg_test();
     win_test(100, 80, 600, 500, 0);
     exit();
+}
+
+void sdf_test(gfx_context_t *ctx) {
+    int size = 16;
 }
 
 void win_test(int x, int y, int width, int height, int decors_active) {
@@ -60,14 +66,17 @@ void win_test(int x, int y, int width, int height, int decors_active) {
     win_ctx->height = height;
 
     /* Load the wallpaper. */
-    /*
-	sprite_t wallpaper = { 0 };
-	load_sprite_jpg(&wallpaper, "/usr/share/bg.jpg");
-	wallpaper.alpha = ALPHA_EMBEDDED;
+    int draw_wallpaper = 1;
+    if (draw_wallpaper == 1) {
+        sprite_t wallpaper = { 0 };
+        load_sprite_jpg(&wallpaper, "/usr/share/bg.jpg");
+        wallpaper.alpha = ALPHA_EMBEDDED;
 
-	printf(1, "wallpaper sprite info: %d x %d\n", wallpaper.width, wallpaper.height);
-	draw_sprite_scaled(ctx, &wallpaper, 0, 0, ctx->width, ctx->height);
-    */
+        printf(1, "wallpaper sprite info: %d x %d\n", wallpaper.width, wallpaper.height);
+        draw_sprite_scaled(ctx, &wallpaper, 0, 0, ctx->width, ctx->height);
+    }
+
+    init_sdf();
 
     init_sprites();
     printf(1, "finish init sprites. \n");
@@ -93,6 +102,11 @@ void win_test(int x, int y, int width, int height, int decors_active) {
 	draw_sprite(ctx, sprites[decors_active + 8], x + width - 28 + BUTTON_OFFSET, y + 16);
     draw_sprite(ctx, sprites[decors_active + 9], x + width - 50 + BUTTON_OFFSET, y + 16);
 
+    draw_sdf_string(ctx, x+width/2-10, y+10, "w indow", 16, rgb(255,255,255), SDF_FONT_THIN); 
+
+    sprite_t cursor = {0};
+    load_sprite(&cursor, "/usr/share/cursor/normal.png");
+    draw_sprite(ctx, &cursor, x+ width/2, y + height/2);
     close(fd);
 }
 
@@ -148,19 +162,19 @@ void init_sprite(int id, char * path) {
 }
 
 void init_sprites() {
-    init_sprite(0, "/usr/share/ul.png");
-    init_sprite(1, "/usr/share/um.png");
-    init_sprite(2, "/usr/share/ur.png");
+    init_sprite(0, "/usr/share/active/ul.png");
+    init_sprite(1, "/usr/share/active/um.png");
+    init_sprite(2, "/usr/share/active/ur.png");
 
-    init_sprite(3, "/usr/share/ml.png");
-    init_sprite(4, "/usr/share/mr.png");
+    init_sprite(3, "/usr/share/active/ml.png");
+    init_sprite(4, "/usr/share/active/mr.png");
 
-    init_sprite(5, "/usr/share/ll.png");
-    init_sprite(6, "/usr/share/lm.png");
-    init_sprite(7, "/usr/share/lr.png");
+    init_sprite(5, "/usr/share/active/ll.png");
+    init_sprite(6, "/usr/share/active/lm.png");
+    init_sprite(7, "/usr/share/active/lr.png");
 
-    init_sprite(8, "/usr/share/bt-close.png");
-    init_sprite(9, "/usr/share/bt-max.png");
+    init_sprite(8, "/usr/share/active/bt-close.png");
+    init_sprite(9, "/usr/share/active/bt-max.png");
 }
 
 void color_test() {

@@ -185,7 +185,8 @@ $(KERNEL)/vectors.S: $(TOOLS)/vectors.pl
 	perl $(TOOLS)/vectors.pl > $(KERNEL)/vectors.S
 
 ULIB = $(BUILD_LIB)/ulib.o $(BUILD_LIB)/usys.o $(BUILD_LIB)/printf.o $(BUILD_LIB)/umalloc.o \
-       $(BUILD_LIB)/math.o $(BUILD_LIB)/inflate.o $(BUILD_LIB)/stdio.o $(BUILD_LIB)/graphics.o \
+       $(BUILD_LIB)/math.o $(BUILD_LIB)/string.o $(BUILD_LIB)/stdio.o $(BUILD_LIB)/list.o \
+       $(BUILD_LIB)/hashmap.o $(BUILD_LIB)/inflate.o $(BUILD_LIB)/graphics.o $(BUILD_LIB)/sdf.o \
 	   $(BUILD_LIB)/png.o $(BUILD_LIB)/jpeg.o
 
 $(BUILD_LIB)/%.o: $(LIB)/%.c
@@ -249,16 +250,18 @@ UPROGS=\
 
 RES = resources/bg.jpg\
       resources/favicon.png\
-      resources/ul.png\
-      resources/um.png\
-      resources/ur.png\
-      resources/ml.png\
-      resources/mr.png\
-      resources/ll.png\
-      resources/lm.png\
-      resources/lr.png\
-      resources/bt-close.png\
-      resources/bt-max.png
+      resources/active/ul.png\
+      resources/active/um.png\
+      resources/active/ur.png\
+      resources/active/ml.png\
+      resources/active/mr.png\
+      resources/active/ll.png\
+      resources/active/lm.png\
+      resources/active/lr.png\
+      resources/active/bt-close.png\
+      resources/active/bt-max.png\
+      resources/fonts/sdf_thin.sdf\
+	  resources/cursor/normal.png
 
 $(BUILD)/fs.img: $(BUILD)/mkfs README.org $(UPROGS) $(RES)
 	./$(BUILD)/mkfs $(BUILD)/fs.img README.org $(UPROGS) $(RES)

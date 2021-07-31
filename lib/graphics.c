@@ -2,6 +2,9 @@
 #include "graphics.h"
 #include "video.h"
 #include "math.h"
+#include <fcntl.h>
+#include <png.h>
+#include <jpeg.h>
 
 static inline int32_t min(int32_t a, int32_t b) {
 	return (a < b) ? a : b;
@@ -400,8 +403,8 @@ int load_sprite(sprite_t * sprite, char * filename) {
 
 	char * ext = extension_from_filename(filename);
 
-	//if (!strcmp(ext,"png") || !strcmp(ext,"sdf")) return load_sprite_png(sprite, filename);
-	//if (!strcmp(ext,"jpg") || !strcmp(ext,"jpeg")) return load_sprite_jpg(sprite, filename);
+	if (!strcmp(ext,"png") || !strcmp(ext,"sdf")) return load_sprite_png(sprite, filename);
+	if (!strcmp(ext,"jpg") || !strcmp(ext,"jpeg")) return load_sprite_jpg(sprite, filename);
 
 	/* Fall back to bitmap */
 	return load_sprite_bmp(sprite, filename);
@@ -409,9 +412,13 @@ int load_sprite(sprite_t * sprite, char * filename) {
 
 int load_sprite_bmp(sprite_t * sprite, char * filename) {
 	/* Open the requested binary */
-	FILE * image = fopen(filename, "r");
+    printf(1, "fopen %s \n", filename);
+	FILE * image = fopen(filename, O_RDONLY);
 
-	if (!image) return 1;
+	if (image == NULL) {
+        printf(1, "faild open %s \n", filename);
+        return 1;
+    }
 
 	size_t image_size= 0;
 

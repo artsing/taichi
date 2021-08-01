@@ -38,6 +38,7 @@ extern struct devsw devsw[];
 
 #define CONSOLE 1
 #define LBF     2
+#define MOUSE   3
 
 #define F_SEEK_SET 0
 #define F_SEEK_CUR 1

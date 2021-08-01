@@ -37,6 +37,7 @@ OBJS = \
 	$(BUILD_KERNEL)/ioapic.o\
 	$(BUILD_KERNEL)/kalloc.o\
 	$(BUILD_KERNEL)/kbd.o\
+    $(BUILD_KERNEL)/mouse.o\
 	$(BUILD_KERNEL)/lapic.o\
 	$(BUILD_KERNEL)/log.o\
 	$(BUILD_KERNEL)/main.o\

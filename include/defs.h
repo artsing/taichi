@@ -257,6 +257,10 @@ unsigned long   random(void);
 int             e1000_init(struct pci_func *pcif);
 void            e1000intr(void);
 
+// mouse.c
+void            mouseinit(void);
+void            mouseintr(void);
+
 // lbf_video.c
 int lbf_video_init(struct pci_func *pcif);
 

@@ -12,15 +12,19 @@ main(void)
 {
     int pid, wpid;
 
-    if(open("/dev/console", O_RDWR) < 0){
+    if (open("/dev/console", O_RDWR) < 0) {
         mknod("/dev/console", 1, 1);
         open("/dev/console", O_RDWR);
     }
     dup(0);  // stdout
     dup(0);  // stderr
 
-    if(open("/dev/fb0", O_RDWR) < 0){
+    if (open("/dev/fb0", O_RDWR) < 0) {
         mknod("/dev/fb0", 2, 1);
+    }
+
+    if (open("/dev/mouse", O_RDWR) < 0) {
+        mknod("/dev/mouse", 3, 1);
     }
 
     for(;;){

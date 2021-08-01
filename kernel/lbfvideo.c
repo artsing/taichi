@@ -26,7 +26,6 @@ static int PREFERRED_H = 900;
 #define BOCHS_MMIO_VIRTX    0x0c
 #define BOCHS_MMIO_VIRTY    0x0e
 
-/* Exported to other modules */
 uint16_t lfb_resolution_x = 0;
 uint16_t lfb_resolution_y = 0;
 uint16_t lfb_resolution_b = 0;

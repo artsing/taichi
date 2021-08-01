@@ -6,6 +6,8 @@
 #include <png.h>
 #include <jpeg.h>
 #include <sdf.h>
+#include <mouse.h>
+#include <stdio.h>
 
 void init_context(int fd, gfx_context_t* ctx);
 
@@ -27,7 +29,7 @@ void png_test();
 void jpg_test();
 void sdf_test();
 void win_test(int x, int y, int width, int height, int decors_active);
-void draw_fill_pos(gfx_context_t * ctx, int x0, int y0, uint32_t color);
+void draw_fill_pos(gfx_context_t * ctx, int x0, int y0, int w, int h, uint32_t color);
 
 int
 main(int argc, char* argv[])
@@ -66,7 +68,7 @@ void win_test(int x, int y, int width, int height, int decors_active) {
     win_ctx->height = height;
 
     /* Load the wallpaper. */
-    int draw_wallpaper = 1;
+    int draw_wallpaper = 0;
     if (draw_wallpaper == 1) {
         sprite_t wallpaper = { 0 };
         load_sprite_jpg(&wallpaper, "/usr/share/bg.jpg");
@@ -76,12 +78,11 @@ void win_test(int x, int y, int width, int height, int decors_active) {
         draw_sprite_scaled(ctx, &wallpaper, 0, 0, ctx->width, ctx->height);
     }
 
-    init_sdf();
+    //init_sdf();
 
     init_sprites();
     printf(1, "finish init sprites. \n");
     uint32_t win_color = alpha_blend_rgba(bg_color, rgba(255, 255, 255, 100));
-    draw_fill_pos(win_ctx, x, y, win_color);
 
     draw_sprite(ctx, sprites[decors_active + 0], x, y);
     for (int i = x; i < x + width - (ul_width + ur_width); ++i) {
@@ -102,11 +103,47 @@ void win_test(int x, int y, int width, int height, int decors_active) {
 	draw_sprite(ctx, sprites[decors_active + 8], x + width - 28 + BUTTON_OFFSET, y + 16);
     draw_sprite(ctx, sprites[decors_active + 9], x + width - 50 + BUTTON_OFFSET, y + 16);
 
-    draw_sdf_string(ctx, x+width/2-10, y+10, "w indow", 16, rgb(255,255,255), SDF_FONT_THIN); 
+    //draw_sdf_string(ctx, x+width/2-10, y+10, "w indow", 16, rgb(255,255,255), SDF_FONT_THIN); 
 
     sprite_t cursor = {0};
     load_sprite(&cursor, "/usr/share/cursor/normal.png");
-    draw_sprite(ctx, &cursor, x+ width/2, y + height/2);
+    //draw_sprite(ctx, &cursor, x+ width/2, y + height/2);
+
+    FILE *mouse = fopen("/dev/mouse", "w");
+    if (mouse == NULL) {
+        printf(1, "open /dev/mouse failed\n");
+        close(fd);
+    } else {
+        printf(1, "open /dev/mouse succes.\n");
+    }
+
+
+    mouse_packet_t packet = {0};
+    int cursor_x=0, cursor_y=0;
+
+    do {
+        size_t n = fread(&packet, sizeof(mouse_packet_t), 1, mouse);
+        if (n == 1) {
+            if (packet.magic == MOUSE_MAGIC) {
+                draw_fill_pos(ctx, cursor_x, cursor_y, cursor.width, cursor.height, bg_color);
+
+                cursor_x = cursor_x + packet.x;
+                if (cursor_x < 0) cursor_x = 0;
+                if (cursor_x > 1440) cursor_x = 1440;
+
+                cursor_y = (cursor_y - packet.y) % 900;
+                if (cursor_y < 0) cursor_y = 0;
+                if (cursor_y > 900) cursor_y = 900;
+
+                draw_sprite(ctx, &cursor, cursor_x, cursor_y);
+            } else {
+            }
+        } else {
+            printf(1, "read mouse position failed \n");
+            sleep(1);
+        }
+    } while (1);
+
     close(fd);
 }
 
@@ -263,12 +300,10 @@ void jpg_test() {
     close(fd);
 }
 
-void draw_fill_pos(gfx_context_t * ctx, int x0, int y0, uint32_t color) {
-    x0 += mr_width;
-    y0 += mr_width;
-	for (uint16_t y = 0; y < ctx->height - 2*mr_width; ++y) {
-		for (uint16_t x = 0; x < ctx->width - 2*mr_width; ++x) {
-			GFX(ctx, x + x0, y + y0) = color;
+void draw_fill_pos(gfx_context_t * ctx, int x0, int y0, int width, int height, uint32_t color) {
+	for (uint16_t y = y0; y < y0 + height; ++y) {
+		for (uint16_t x = x0; x < x0 + width; ++x) {
+			GFX(ctx, x, y) = color;
 		}
 	}
 }

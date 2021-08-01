@@ -12,10 +12,10 @@ typedef enum {
 
 typedef struct {
 	uint32_t magic;
-	int32_t x_difference;
-	int32_t y_difference;
+	int32_t x;
+	int32_t y;
 	mouse_click_t buttons;
-} mouse_device_packet_t;
+} mouse_packet_t;
 
 #define MOUSE_MAGIC 0xFEED1234
 

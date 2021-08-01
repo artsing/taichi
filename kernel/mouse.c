@@ -1,6 +1,11 @@
 #include "types.h"
 #include "defs.h"
+#include "param.h"
 #include "traps.h"
+#include "spinlock.h"
+#include "sleeplock.h"
+#include "fs.h"
+#include "file.h"
 #include "x86.h"
 #include "mouse.h"
 #
@@ -21,6 +26,16 @@ static uint8_t mouse_byte[4];
 
 static int8_t mouse_mode = MOUSE_DEFAULT;
 void (*ps2_mouse_alternate)(void) = NULL;
+
+static struct {
+    struct spinlock lock;
+    int locking;
+
+    mouse_packet_t packets[MOUSE_PACKTES];
+    int pos;
+    int x;
+    int y;
+} mouse;
 
 static void mouse_wait(uint8_t a_type) {
 	uint32_t timeout = 100000;
@@ -52,6 +67,34 @@ static uint8_t mouse_read(void) {
 	mouse_wait(0);
 	char t = inb(MOUSE_PORT);
 	return t;
+}
+
+int
+dev_mouse_read(struct inode *ip, char *dst, int n)
+{
+    if (mouse.locking) {
+        acquire(&mouse.lock);
+    }
+
+    memcpy(dst, &mouse.packets[mouse.pos], sizeof(mouse_packet_t));
+    memset(&mouse.packets[mouse.pos], 0, sizeof(mouse_packet_t));
+
+    if (mouse.locking) {
+        release(&mouse.lock);
+    }
+
+    return 1;
+}
+
+int
+dev_mouse_write(struct inode *ip, char *buf, int n)
+{
+    return -1;
+}
+
+int
+dev_mouse_ioctl(struct inode* ip, int req, void* arg) {
+    return -1;
 }
 
 void mouseintr() {
@@ -87,7 +130,7 @@ void mouseintr() {
 finish_packet:
 		mouse_cycle = 0;
 		/* We now have a full mouse packet ready to use */
-		mouse_device_packet_t packet;
+		mouse_packet_t packet = {0};
 		packet.magic = MOUSE_MAGIC;
 		int x = mouse_byte[1];
 		int y = mouse_byte[2];
@@ -104,8 +147,8 @@ finish_packet:
 			x = 0;
 			y = 0;
 		}
-		packet.x_difference = x;
-		packet.y_difference = y;
+		packet.x = x;
+		packet.y = y;
 		packet.buttons = 0;
 		if (mouse_byte[0] & 0x01) {
 			packet.buttons |= LEFT_CLICK;
@@ -125,9 +168,19 @@ finish_packet:
 			}
 		}
 
-        cprintf("[MOUSE][Handler] position{%d, %d}, buttons{%d}\n", x, y, packet.buttons);
+        if (mouse.locking) {
+            acquire(&mouse.lock);
+        }
+
+        mouse.pos = (mouse.pos + 1) % MOUSE_PACKTES;
+        memcpy(&mouse.packets[mouse.pos], &packet, sizeof(mouse_packet_t));
+
+        if (mouse.locking) {
+            release(&mouse.lock);
+        }
+
         /*
-		mouse_device_packet_t bitbucket;
+		mouse_packet_t bitbucket;
 		while (pipe_size(mouse_pipe) > (int)(DISCARD_POINT * sizeof(packet))) {
 			read_fs(mouse_pipe, 0, sizeof(packet), (uint8_t *)&bitbucket);
 		}
@@ -193,6 +246,10 @@ void mouseinit(void) {
 	outb(MOUSE_PORT, 0x02);
 	mouse_wait(1);
 	mouse_read();
+
+    devsw[MOUSE].write = dev_mouse_write;
+    devsw[MOUSE].read = dev_mouse_read;
+    devsw[MOUSE].ioctl = dev_mouse_ioctl;
 
     ioapicenable(IRQ_MOUSE, 0);
 

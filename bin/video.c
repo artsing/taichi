@@ -71,7 +71,7 @@ void draw_window(gfx_context_t *ctx, int x, int y, int width, int height, int de
 void win_test(int x, int y, int width, int height, int decors_active) {
     int fd;
     gfx_context_t *ctx = malloc(sizeof(gfx_context_t));
-    gfx_context_t *win_ctx = malloc(sizeof(gfx_context_t));
+    gfx_context_t *bg_ctx = malloc(sizeof(gfx_context_t));
 
     fd = open("/dev/fb0", O_RDWR);
     if (fd < 0) {
@@ -86,12 +86,11 @@ void win_test(int x, int y, int width, int height, int decors_active) {
     draw_fill(ctx, bg_color);
 
 
-    memcpy(win_ctx, ctx, sizeof(gfx_context_t));
-    win_ctx->width = width;
-    win_ctx->height = height;
+    memcpy(bg_ctx, ctx, sizeof(gfx_context_t));
+    bg_ctx->buffer = malloc(BUF_SIZE(ctx));
 
-    /* Load the wallpaper. */
-    int draw_wallpaper = 0;
+    // Load the wallpaper.
+    int draw_wallpaper = 1;
     sprite_t wallpaper = { 0 };
     if (draw_wallpaper == 1) {
         load_sprite_jpg(&wallpaper, "/usr/share/bg.jpg");
@@ -99,6 +98,7 @@ void win_test(int x, int y, int width, int height, int decors_active) {
 
         printf(1, "wallpaper sprite info: %d x %d\n", wallpaper.width, wallpaper.height);
         draw_sprite_scaled(ctx, &wallpaper, 0, 0, ctx->width, ctx->height);
+        memcpy(bg_ctx->buffer, ctx->backbuffer, BUF_SIZE(ctx));
     }
 
     //init_sdf();
@@ -110,7 +110,7 @@ void win_test(int x, int y, int width, int height, int decors_active) {
     // draw window
     draw_window(ctx, x, y, width, height, decors_active);
 
-    //draw_sdf_string(ctx, x+width/2-10, y+10, "w indow", 16, rgb(255,255,255), SDF_FONT_THIN); 
+    //draw_sdf_string(ctx, x+width/2-10, y+10, "w indow", 16, rgb(255,255,255), SDF_FONT_THIN);
 
     memcpy(ctx->buffer, ctx->backbuffer, BUF_SIZE(ctx));
 
@@ -122,10 +122,10 @@ void win_test(int x, int y, int width, int height, int decors_active) {
     if (mouse == NULL) {
         printf(1, "open /dev/mouse failed\n");
         close(fd);
+        return;
     } else {
         printf(1, "open /dev/mouse succes.\n");
     }
-
 
     mouse_packet_t packet = {0};
     int cursor_x=0, cursor_y=0;
@@ -138,16 +138,18 @@ void win_test(int x, int y, int width, int height, int decors_active) {
             if (packet.magic == MOUSE_MAGIC) {
                 // draw background
                 if (draw_wallpaper == 1) {
-                    draw_sprite_scaled(ctx, &wallpaper, 0, 0, ctx->width, ctx->height);
+                    memcpy(ctx->backbuffer, bg_ctx->buffer, BUF_SIZE(ctx));
                 } else {
                     draw_fill(ctx, bg_color);
                 }
-
 
                 // draw window
                 if (packet.buttons == LEFT_CLICK) {
                     window_status = ~window_status;
                     refresh_win = 1;
+                    //x += 5;
+                } else if (packet.buttons == RIGHT_CLICK) {
+                    //y += 5;
                 } else {
                     refresh_win = 0;
                 }
@@ -202,6 +204,7 @@ void win_test(int x, int y, int width, int height, int decors_active) {
             }
         } else {
             printf(1, "read mouse position failed \n");
+            break;
         }
     } while (1);
 

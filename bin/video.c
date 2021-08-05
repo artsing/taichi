@@ -8,6 +8,7 @@
 #include <sdf.h>
 #include <mouse.h>
 #include <stdio.h>
+#include <terminal-font.h>
 
 void init_context(int fd, gfx_context_t* ctx);
 #define BUF_SIZE(ctx) (GFX_S(ctx) * GFX_H(ctx) + GFX_W(ctx) * GFX_B(ctx))
@@ -46,6 +47,22 @@ void sdf_test(gfx_context_t *ctx) {
     int size = 16;
 }
 
+static uint16_t char_width     = 9;    /* Width of a cell in pixels */
+static uint16_t char_height    = 20;   /* Height of a cell in pixels */
+
+void term_write_char(gfx_context_t *ctx, int val, int x, int y, uint32_t fg, uint32_t bg) {
+    uint16_t * c = large_font[val];
+    for (uint8_t i = 0; i < char_height; ++i) {
+        for (uint8_t j = 0; j < char_width; ++j) {
+            if (c[i] & (1 << (15-j))) {
+                GFX(ctx, x+j,y+i) = fg;
+            } else {
+                GFX(ctx, x+j,y+i) = bg;
+            }
+        }
+    }
+}
+
 void draw_window(gfx_context_t *ctx, int x, int y, int width, int height, int decors_active) {
     draw_sprite(ctx, sprites[decors_active + 0], x, y);
     for (int i = x; i < x + width - (ul_width + ur_width); ++i) {
@@ -65,7 +82,29 @@ void draw_window(gfx_context_t *ctx, int x, int y, int width, int height, int de
 
     draw_sprite(ctx, sprites[decors_active + 8], x + width - 28 + BUTTON_OFFSET, y + 16);
     draw_sprite(ctx, sprites[decors_active + 9], x + width - 50 + BUTTON_OFFSET, y + 16);
+    draw_fill_pos(ctx, x+6, y + 33, width-12, height-39, rgb(20,20,20));
 
+    char* bash = "artsing";
+    int xx = x;
+    int yy = y;
+    while(*bash) {
+        term_write_char(ctx, *bash++, xx+10, yy+33, rgb(255,0,255), rgb(0,0,0));
+        xx += char_width;
+    }
+
+    bash = "@";
+    while(*bash) {
+        term_write_char(ctx, *bash++, xx+10, yy+33, rgb(255,255,255), rgb(0,0,0));
+        xx += char_width;
+    }
+
+    bash = "pangu #";
+    while(*bash) {
+        term_write_char(ctx, *bash++, xx+10, yy+33, rgb(0,255,0), rgb(0,0,0));
+        xx += char_width;
+    }
+
+    draw_sdf_string(ctx, x+width/2-10, y+10, "terminal", 16, rgb(255,255,255), SDF_FONT_THIN);
 }
 
 void win_test(int x, int y, int width, int height, int decors_active) {
@@ -90,7 +129,7 @@ void win_test(int x, int y, int width, int height, int decors_active) {
     bg_ctx->buffer = malloc(BUF_SIZE(ctx));
 
     // Load the wallpaper.
-    int draw_wallpaper = 1;
+    int draw_wallpaper = 0;
     sprite_t wallpaper = { 0 };
     if (draw_wallpaper == 1) {
         load_sprite_jpg(&wallpaper, "/usr/share/bg.jpg");
@@ -101,7 +140,7 @@ void win_test(int x, int y, int width, int height, int decors_active) {
         memcpy(bg_ctx->buffer, ctx->backbuffer, BUF_SIZE(ctx));
     }
 
-    //init_sdf();
+    init_sdf();
 
     init_sprites();
     printf(1, "finish init sprites. \n");
@@ -110,7 +149,6 @@ void win_test(int x, int y, int width, int height, int decors_active) {
     // draw window
     draw_window(ctx, x, y, width, height, decors_active);
 
-    //draw_sdf_string(ctx, x+width/2-10, y+10, "w indow", 16, rgb(255,255,255), SDF_FONT_THIN);
 
     memcpy(ctx->buffer, ctx->backbuffer, BUF_SIZE(ctx));
 

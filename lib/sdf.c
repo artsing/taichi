@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <fcntl.h>
 
 #include <graphics.h>
 #include <hashmap.h>
@@ -117,20 +118,22 @@ void init_sdf(void) {
 	load_font(&_font_data_mono_bold_oblique, SDF_FONT_MONO_BOLD_OBLIQUE);
     */
 
-    /*
-	FILE * fi = fopen("/etc/sdf.conf", "r");
+	FILE * fi = fopen("/etc/sdf.conf", O_RDONLY);
+    if (fi == NULL) {
+        return;
+    }
+
 	char tmp[1024];
 	char * s = tmp;
-    */
 
     for (int i = 0; i < 256; ++i) {
 		_char_data[i].code = i;
 		_char_data[i].width_bold = 25;
-		_char_data[i].width_thin = 25;
+		_char_data[i].width_thin = 20;
 		_char_data[i].width_mono = 25;
 	}
-    /*
-	while ((s = fgets(tmp, 1024, fi))) {
+
+	while (*(s = fgets(tmp, 1024, fi))) {
 		if (strlen(s) < 1) continue;
 		int i = offset(*s);
 		s++; s++;
@@ -146,7 +149,7 @@ void init_sdf(void) {
 		}
 	}
 	fclose(fi);
-    */
+
 	loaded = 1;
 }
 

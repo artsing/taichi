@@ -262,6 +262,7 @@ RES = resources/bg.jpg\
       resources/active/bt-close.png\
       resources/active/bt-max.png\
       resources/fonts/sdf_thin.sdf\
+      resources/etc/sdf.conf\
 	  resources/cursor/normal.png
 
 $(BUILD)/fs.img: $(BUILD)/mkfs README.org $(UPROGS) $(RES)
@@ -313,7 +314,7 @@ run: $(BUILD)/xv6.img $(BUILD)/fs.img
 	ip link set tap0 up
 	$(QEMU) -nographic $(QEMUOPTS)
 
-clear: 
+clear:
 	ip tuntap del mode tap name tap0
 
 .PHONY: clean clear run

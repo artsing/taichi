@@ -98,6 +98,8 @@ extern void rewind (FILE *stream);
 extern int fgetc (FILE *stream);
 extern int getc (FILE *stream);
 
+extern char *fgets(char *restrict buf, int n, FILE *restrict stream);
+
 /**
  * Write a character to STREAM.
  */

@@ -261,6 +261,16 @@ RES = resources/bg.jpg\
       resources/active/lr.png\
       resources/active/bt-close.png\
       resources/active/bt-max.png\
+	  resources/inactive/ul.png\
+      resources/inactive/um.png\
+      resources/inactive/ur.png\
+      resources/inactive/ml.png\
+      resources/inactive/mr.png\
+      resources/inactive/ll.png\
+      resources/inactive/lm.png\
+      resources/inactive/lr.png\
+      resources/inactive/bt-close.png\
+      resources/inactive/bt-max.png\
       resources/fonts/sdf_thin.sdf\
       resources/etc/sdf.conf\
 	  resources/cursor/normal.png

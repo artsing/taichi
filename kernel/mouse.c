@@ -33,6 +33,7 @@ static struct {
 
     mouse_packet_t packets[MOUSE_PACKTES];
     int pos;
+    int read_pos;
     int x;
     int y;
 } mouse;
@@ -76,14 +77,23 @@ dev_mouse_read(struct inode *ip, char *dst, int n)
         acquire(&mouse.lock);
     }
 
-    memcpy(dst, &mouse.packets[mouse.pos], sizeof(mouse_packet_t));
-    memset(&mouse.packets[mouse.pos], 0, sizeof(mouse_packet_t));
+    mouse_packet_t* buf = (mouse_packet_t *)dst;
+    for (int i=0; i<n; i++) {
+        // buffer is empty
+        if (mouse.read_pos == mouse.pos) {
+            return i;
+        }
+
+        memcpy(buf++, &mouse.packets[mouse.read_pos], sizeof(mouse_packet_t));
+        mouse.packets[mouse.read_pos].magic = 0;
+        mouse.read_pos = (mouse.read_pos + 1) % MOUSE_PACKTES;
+    }
 
     if (mouse.locking) {
         release(&mouse.lock);
     }
 
-    return 1;
+    return n;
 }
 
 int
@@ -172,8 +182,11 @@ finish_packet:
             acquire(&mouse.lock);
         }
 
-        mouse.pos = (mouse.pos + 1) % MOUSE_PACKTES;
-        memcpy(&mouse.packets[mouse.pos], &packet, sizeof(mouse_packet_t));
+        // buffer full
+        if (((mouse.pos + 1) % MOUSE_PACKTES) != mouse.read_pos) {
+            memcpy(&mouse.packets[mouse.pos], &packet, sizeof(mouse_packet_t));
+            mouse.pos = (mouse.pos + 1) % MOUSE_PACKTES;
+        }
 
         if (mouse.locking) {
             release(&mouse.lock);

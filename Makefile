@@ -273,7 +273,10 @@ RES = resources/bg.jpg\
       resources/inactive/bt-max.png\
       resources/fonts/sdf_thin.sdf\
       resources/etc/sdf.conf\
-	  resources/cursor/normal.png
+	  resources/cursor/normal.png\
+      resources/icons/finder.png\
+      resources/icons/dir.png\
+      resources/icons/terminal.png
 
 $(BUILD)/fs.img: $(BUILD)/mkfs README.org $(UPROGS) $(RES)
 	./$(BUILD)/mkfs $(BUILD)/fs.img README.org $(UPROGS) $(RES)

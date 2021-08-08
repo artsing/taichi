@@ -71,7 +71,7 @@ main(int argc, char *argv[])
     int i, cc, fd;
     uint rootino, inum, bin_ino, ino, off;
     uint share_ino, active_ino, inactive_ino, fonts_ino;
-    uint cursor_ino, etc_ino;
+    uint cursor_ino, etc_ino, icons_ino;
     struct dirent de;
     char buf[BSIZE];
     struct dinode din;
@@ -140,6 +140,7 @@ main(int argc, char *argv[])
     inactive_ino = mkdir(share_ino, "inactive");
     fonts_ino = mkdir(share_ino, "fonts");
     cursor_ino = mkdir(share_ino, "cursor");
+    icons_ino = mkdir(share_ino, "icons");
 
     mkdir(rootino, "dev");
     etc_ino = mkdir(rootino, "etc");
@@ -176,6 +177,9 @@ main(int argc, char *argv[])
         } else if (!strncmp(argv[i], "resources/cursor/", 17)) {
             argv[i] += 17;
             ino = cursor_ino;
+        } else if (!strncmp(argv[i], "resources/icons/", 16)) {
+            argv[i] += 16;
+            ino = icons_ino;
         } else if (!strncmp(argv[i], "resources/", 10)) {
             argv[i] += 10;
             ino = share_ino;

@@ -11,7 +11,7 @@
 #include <terminal-font.h>
 
 void init_context(int fd, gfx_context_t* ctx);
-#define BUF_SIZE(ctx) (GFX_S(ctx) * GFX_H(ctx) + GFX_W(ctx) * GFX_B(ctx))
+#define BUF_SIZE(ctx) (GFX_W(ctx) * GFX_H(ctx) * GFX_B(ctx))
 
 static sprite_t * sprites[20];
 void init_sprite(int id, char * path);
@@ -143,6 +143,15 @@ void win_test(int x, int y, int width, int height) {
     // memu bar
     draw_fill_pos(ctx, 0, 0, ctx->width, 32, rgb(62, 62, 62));
 
+    sprite_t terminal = {0};
+    int terminal_x = 10;
+    int terminal_y = 40;
+    int terminal_w = 56;
+    int terminal_h = 56;
+    int terminal_mouse_in = 0;
+    load_sprite(&terminal, "/usr/share/icons/terminal.png");
+    draw_sprite_scaled(ctx, &terminal, terminal_x, terminal_y, terminal_w, terminal_h);
+
     //init_sdf();
 
     init_sprites();
@@ -217,12 +226,15 @@ void win_test(int x, int y, int width, int height) {
                         refresh_win = 1;
                     }
 
+                    if (cursor_x > terminal_x && cursor_x < terminal_x + 56
+                        && cursor_y > terminal_y && cursor_y > terminal_y + 56) {
+                        terminal_mouse_in = 1;
+                    } else {
+                        terminal_mouse_in = 0;
+                    }
+
                     if (i % n == 0) {
-                        // draw background
-                        if (draw_wallpaper == 1) {
-                            //memcpy(ctx->backbuffer, bg_ctx->buffer, BUF_SIZE(ctx));
-                        } else {
-                            //draw_fill(ctx, bg_color);
+                        if (refresh_cursor) {
                             for (int y0 = last_cursor_y; y0 < last_cursor_y + cursor.height; y0++) {
                                 if (y0 > GFX_H(ctx)) {
                                     break;
@@ -231,7 +243,10 @@ void win_test(int x, int y, int width, int height) {
                                     &GFXR(bg_ctx, last_cursor_x, y0),
                                     cursor.width * sizeof(uint32_t));
                             }
+                        }
 
+                        if (terminal_mouse_in) {
+                            draw_sprite_scaled_alpha(ctx, &terminal, terminal_x, terminal_y, terminal_w, terminal_h, 0.5);
                         }
 
                         // draw window
@@ -257,6 +272,14 @@ void win_test(int x, int y, int width, int height) {
 
 
                     if (i % n == 0) {
+                        // flib terminal
+                        if (terminal_mouse_in) {
+                            for (int y0 = terminal_y; y0 < terminal_y + terminal_h; y0++) {
+                                memcpy(&GFXR(ctx, terminal_x, y0),
+                                       &GFX(ctx, terminal_x, y0),
+                                       terminal_w * sizeof(uint32_t));
+                            }
+                        }
                         // flib window
                         if (refresh_win == 1) {
                             for (int y0 = y; y0 < y + height; y0++) {
@@ -289,7 +312,6 @@ void win_test(int x, int y, int width, int height) {
                             }
 
                         }
-
 
                         // flib new cursor
                         for (int y0 = cursor_y; y0 < cursor_y + cursor.height; y0++) {

@@ -249,34 +249,7 @@ UPROGS=\
 	$(BUILD_BIN)/_video\
 
 
-RES = resources/bg.jpg\
-      resources/favicon.png\
-      resources/active/ul.png\
-      resources/active/um.png\
-      resources/active/ur.png\
-      resources/active/ml.png\
-      resources/active/mr.png\
-      resources/active/ll.png\
-      resources/active/lm.png\
-      resources/active/lr.png\
-      resources/active/bt-close.png\
-      resources/active/bt-max.png\
-	  resources/inactive/ul.png\
-      resources/inactive/um.png\
-      resources/inactive/ur.png\
-      resources/inactive/ml.png\
-      resources/inactive/mr.png\
-      resources/inactive/ll.png\
-      resources/inactive/lm.png\
-      resources/inactive/lr.png\
-      resources/inactive/bt-close.png\
-      resources/inactive/bt-max.png\
-      resources/fonts/sdf_thin.sdf\
-      resources/etc/sdf.conf\
-	  resources/cursor/normal.png\
-      resources/icons/finder.png\
-      resources/icons/dir.png\
-      resources/icons/terminal.png
+RES = resources/cursor/normal.png \
 
 $(BUILD)/fs.img: $(BUILD)/mkfs README.org $(UPROGS) $(RES)
 	./$(BUILD)/mkfs $(BUILD)/fs.img README.org $(UPROGS) $(RES)

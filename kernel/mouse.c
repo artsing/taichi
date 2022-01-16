@@ -73,8 +73,17 @@ static uint8_t mouse_read(void) {
 int
 dev_mouse_read(struct inode *ip, char *dst, int n)
 {
+retry:
     if (mouse.locking) {
         acquire(&mouse.lock);
+    }
+
+    if (mouse.read_pos == mouse.pos) {
+        if (mouse.locking) {
+            release(&mouse.lock);
+        }
+        yield();
+        goto retry;
     }
 
     mouse_packet_t* buf = (mouse_packet_t *)dst;

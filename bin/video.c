@@ -10,6 +10,13 @@
 #include <stdio.h>
 #include <terminal-font.h>
 
+#define RGB_000000 rgb(0, 0, 0)
+#define RGB_000084 rgb(0, 0, 132)
+#define RGB_008484 rgb(0, 132, 132)
+#define RGB_848484 rgb(132, 132, 132)
+#define RGB_C6C6C6 rgb(198, 198, 198)
+#define RGB_FFFFFF rgb(255, 255, 255)
+
 void init_context(int fd, gfx_context_t* ctx);
 #define BUF_SIZE(ctx) (GFX_W(ctx) * GFX_H(ctx) * GFX_B(ctx))
 
@@ -32,6 +39,7 @@ void jpg_test();
 void sdf_test();
 void win_test(int x, int y, int width, int height);
 void draw_fill_pos(gfx_context_t * ctx, int x0, int y0, int w, int h, uint32_t color);
+void rectangle_fill(gfx_context_t* ctx, int x0, int y0, int x1, int y1, uint32_t color);
 
 int
 main(int argc, char* argv[])
@@ -39,7 +47,7 @@ main(int argc, char* argv[])
     //color_test();
     // png_test();
     // jpg_test();
-    win_test(100, 80, 600, 500);
+    win_test(100, 80, 320, 200);
     exit();
 }
 
@@ -63,53 +71,77 @@ void term_write_char(gfx_context_t *ctx, int val, int x, int y, uint32_t fg, uin
     }
 }
 
-void draw_window(gfx_context_t *ctx, int x, int y, int width, int height, int decors_active) {
-    draw_sprite(ctx, sprites[decors_active + 0], x, y);
-    for (int i = x; i < x + width - (ul_width + ur_width); ++i) {
-        draw_sprite(ctx, sprites[decors_active + 1], i + ul_width, y);
+void putchar_ascii(gfx_context_t *ctx, int x, int y, uint32_t color, int val) {
+    uint16_t * c = large_font[val];
+    for (uint8_t i = 0; i < char_height; ++i) {
+        for (uint8_t j = 0; j < char_width; ++j) {
+            if (c[i] & (1 << (15-j))) {
+                GFX(ctx, x+j,y+i) = color;
+            }
+        }
     }
+}
 
-    draw_sprite(ctx, sprites[decors_active + 2], x + width - ur_width, y);
-    for (int i = y; i < y + height - (u_height + l_height); ++i) {
-        draw_sprite(ctx, sprites[decors_active + 3], x, i + u_height);
-        draw_sprite(ctx, sprites[decors_active + 4], x + width - mr_width, i + u_height);
+void putfonts_ascii(gfx_context_t *ctx, int x, int y, uint32_t c, char* s) {
+    extern char hankaku[4096];
+        for (; *s != 0x00; s++) {
+        putchar_ascii(ctx, x, y, c, *s);
+        x += 8;
     }
-    draw_sprite(ctx, sprites[decors_active + 5], x, y + height - l_height);
-    for (int i = x; i < x + width - (ll_width + lr_width); ++i) {
-        draw_sprite(ctx, sprites[decors_active + 6], i + ll_width, y + height - l_height);
+}
+
+void draw_window(gfx_context_t *ctx, int x, int y, int xsize, int ysize, char *title) {
+    static char closebtn[14][16] = {
+        "OOOOOOOOOOOOOOO@",
+        "OQQQQQQQQQQQQQ$@",
+        "OQQQQQQQQQQQQQ$@",
+        "OQQQ@@QQQQ@@QQ$@",
+        "OQQQQ@@QQ@@QQQ$@",
+        "OQQQQQ@@@@QQQQ$@",
+        "OQQQQQQ@@QQQQQ$@",
+        "OQQQQQ@@@@QQQQ$@",
+        "OQQQQ@@QQ@@QQQ$@",
+        "OQQQ@@QQQQ@@QQ$@",
+        "OQQQQQQQQQQQQQ$@",
+        "OQQQQQQQQQQQQQ$@",
+        "O$$$$$$$$$$$$$$@",
+        "@@@@@@@@@@@@@@@@"
+    };
+
+    rectangle_fill(ctx, x,             y,             x + xsize - 1, y,             RGB_C6C6C6);
+    rectangle_fill(ctx, x + 1,         y + 1,         x + xsize - 2, y + 1,         RGB_FFFFFF);
+    rectangle_fill(ctx, x,             y,             x,             y + ysize - 1, RGB_C6C6C6);
+    rectangle_fill(ctx, x + 1,         y + 1,         x + 1,         y + ysize - 2, RGB_FFFFFF);
+    rectangle_fill(ctx, x + xsize - 2, y + 1,         x + xsize - 2, y + ysize - 2, RGB_848484);
+    rectangle_fill(ctx, x + xsize - 1, y,             x + xsize - 1, y + ysize - 1, RGB_000000);
+    rectangle_fill(ctx, x + 2,         y + 2,         x + xsize - 3, y + ysize - 3, RGB_C6C6C6);
+    rectangle_fill(ctx, x + 3,         y + 3,         x + xsize - 4, y + 20,        RGB_000084);
+    rectangle_fill(ctx, x + 1,         y + ysize - 2, x + xsize - 2, y + ysize - 2, RGB_848484);
+    rectangle_fill(ctx, x,             y + ysize - 1, x + xsize - 1, y + ysize - 1, RGB_000000);
+
+    putfonts_ascii(ctx, x + 6, y+2, RGB_FFFFFF, title);
+
+    char c;
+    uint32_t color;
+    for (int y1 = 0; y1 < 14; y1++) {
+        for (int x1 = 0; x1 < 16; x1++) {
+            c = closebtn[y1][x1];
+            if (c == '@') {
+                color = RGB_000000;
+            } else if (c == '$') {
+                color = RGB_848484;
+            } else if (c == 'Q') {
+                color = RGB_C6C6C6;
+            } else {
+                color = RGB_FFFFFF;
+            }
+            GFX(ctx, x+xsize-21+x1, y+y1+5) = color;
+        }
     }
-    draw_sprite(ctx, sprites[decors_active + 7], x + width - lr_width, y + height - l_height);
-
-    draw_sprite(ctx, sprites[decors_active + 8], x + width - 28 + BUTTON_OFFSET, y + 16);
-    draw_sprite(ctx, sprites[decors_active + 9], x + width - 50 + BUTTON_OFFSET, y + 16);
-    draw_fill_pos(ctx, x+6, y + 33, width-12, height-39, rgb(20,20,20));
-
-    char* bash = "artsing";
-    int xx = x;
-    int yy = y;
-    while(*bash) {
-        term_write_char(ctx, *bash++, xx+10, yy+33, rgb(255,0,255), rgb(0,0,0));
-        xx += char_width;
-    }
-
-    bash = "@";
-    while(*bash) {
-        term_write_char(ctx, *bash++, xx+10, yy+33, rgb(255,255,255), rgb(0,0,0));
-        xx += char_width;
-    }
-
-    bash = "pangu #";
-    while(*bash) {
-        term_write_char(ctx, *bash++, xx+10, yy+33, rgb(0,255,0), rgb(0,0,0));
-        xx += char_width;
-    }
-
-    //draw_sdf_string(ctx, x+width/2-10, y+10, "terminal", 16, rgb(255,255,255), SDF_FONT_THIN);
 }
 
 void win_test(int x, int y, int width, int height) {
     int fd;
-    int decors_active = 10;
     gfx_context_t *ctx = malloc(sizeof(gfx_context_t));
     gfx_context_t *bg_ctx = malloc(sizeof(gfx_context_t));
 
@@ -121,9 +153,11 @@ void win_test(int x, int y, int width, int height) {
     printf(1, "fd = %d \n", fd);
 
     init_context(fd, ctx);
+    int xsize = ctx->width;
+    int ysize = ctx->height;
 
-    uint32_t bg_color = rgb(255, 255, 255);
-    draw_fill(ctx, bg_color);
+    // background
+    draw_fill(ctx, RGB_008484);
 
     memcpy(bg_ctx, ctx, sizeof(gfx_context_t));
     bg_ctx->buffer = malloc(BUF_SIZE(ctx));
@@ -140,8 +174,24 @@ void win_test(int x, int y, int width, int height) {
         memcpy(bg_ctx->buffer, ctx->backbuffer, BUF_SIZE(ctx));
     }
 
-    // memu bar
-    draw_fill_pos(ctx, 0, 0, ctx->width, 32, rgb(62, 62, 62));
+    // task bar
+    rectangle_fill(ctx, 0, ysize - 28, xsize - 1, ysize - 28, RGB_C6C6C6);
+    rectangle_fill(ctx, 0, ysize - 27, xsize - 1, ysize - 27, RGB_FFFFFF);
+    rectangle_fill(ctx, 0, ysize - 26, xsize - 1, ysize - 1, RGB_C6C6C6);
+
+    rectangle_fill(ctx, 3,  ysize - 24, 59, ysize - 24, RGB_FFFFFF);
+    rectangle_fill(ctx, 2,  ysize - 24, 2,  ysize - 4,  RGB_FFFFFF);
+    rectangle_fill(ctx, 3,  ysize - 4,  59, ysize - 4,  RGB_848484);
+    rectangle_fill(ctx, 59, ysize - 23, 59, ysize - 5,  RGB_848484);
+    rectangle_fill(ctx, 2,  ysize - 3,  59, ysize - 3,  RGB_000000);
+    rectangle_fill(ctx, 60, ysize - 24, 60, ysize - 3,  RGB_000000);
+
+    rectangle_fill(ctx, xsize - 47, ysize - 24, xsize - 4,  ysize - 24, RGB_848484);
+    rectangle_fill(ctx, xsize - 47, ysize - 23, xsize - 47, ysize - 4, RGB_848484);
+    rectangle_fill(ctx, xsize - 47, ysize - 3,  xsize - 4,  ysize - 3, RGB_848484);
+    rectangle_fill(ctx, xsize - 47, ysize - 24, xsize - 3,  ysize - 3, RGB_848484);
+
+    putfonts_ascii(ctx, 10,  ysize-24, RGB_000000, "pangu");
 
     sprite_t terminal = {0};
     int terminal_x = 10;
@@ -149,17 +199,13 @@ void win_test(int x, int y, int width, int height) {
     int terminal_w = 56;
     int terminal_h = 56;
     int terminal_mouse_in = 0;
-    load_sprite(&terminal, "/usr/share/icons/terminal.png");
-    draw_sprite_scaled(ctx, &terminal, terminal_x, terminal_y, terminal_w, terminal_h);
+    //load_sprite(&terminal, "/usr/share/icons/terminal.png");
+    //draw_sprite_scaled(ctx, &terminal, terminal_x, terminal_y, terminal_w, terminal_h);
 
     //init_sdf();
 
-    init_sprites();
-    printf(1, "finish init sprites. \n");
-    uint32_t win_color = alpha_blend_rgba(bg_color, rgba(255, 255, 255, 100));
-
     // draw window
-    draw_window(ctx, x, y, width, height, decors_active);
+    draw_window(ctx, x, y, width, height, "Terminal");
     memcpy(bg_ctx->buffer, bg_ctx->backbuffer, BUF_SIZE(ctx));
 
     memcpy(ctx->buffer, ctx->backbuffer, BUF_SIZE(ctx));
@@ -219,10 +265,8 @@ void win_test(int x, int y, int width, int height) {
                     // mouse in window
                     if (cursor_x > x && cursor_x < x + width
                         && cursor_y > y && cursor_y < y + height) {
-                        decors_active = 0;
                         refresh_win = 1;
                     } else {
-                        decors_active = 10;
                         refresh_win = 1;
                     }
 
@@ -257,7 +301,7 @@ void win_test(int x, int y, int width, int height) {
                                     width * sizeof(uint32_t));
                             }
 
-                            draw_window(ctx, x, y, width, height, decors_active);
+                            draw_window(ctx, x, y, width, height, "Terminal");
                         }
 
                         // right menu
@@ -328,11 +372,11 @@ void win_test(int x, int y, int width, int height) {
                         last_cursor_y = cursor_y;
                     }
                 } else {
-                    sleep(1);
+                    //sleep(1);
                 }
             }
         } else {
-            sleep(1);
+            //sleep(1);
         }
     } while (1);
 
@@ -515,5 +559,13 @@ void draw_fill_pos(gfx_context_t * ctx, int x0, int y0, int width, int height, u
 			GFX(ctx, x, y) = color;
 		}
 	}
+}
+
+void rectangle_fill(gfx_context_t* ctx, int x0, int y0, int x1, int y1, uint32_t color) {
+    for (uint16_t y = y0; y <= y1; y++) {
+        for (uint16_t x = x0; x <= x1; x++) {
+             GFX(ctx, x, y) = color; 
+        }
+    }
 }
 

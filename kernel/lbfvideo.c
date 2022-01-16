@@ -13,8 +13,8 @@
 #include "x86.h"
 
 
-static int PREFERRED_W = 1440;
-static int PREFERRED_H = 900;
+static int PREFERRED_W = 1024;//1440;
+static int PREFERRED_H = 768;//900;
 #define PREFERRED_VY 4096
 #define PREFERRED_B 32
 

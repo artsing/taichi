@@ -27,6 +27,14 @@ main(void)
         mknod("/dev/mouse", 3, 1);
     }
 
+    /*
+    pid = fork();
+    if (pid == 0) {
+        exec("/bin/ws", argv);
+        exit();
+    }
+    */
+
     for(;;){
         printf(1, "init: starting sh\n");
         pid = fork();

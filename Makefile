@@ -188,7 +188,7 @@ $(KERNEL)/vectors.S: $(TOOLS)/vectors.pl
 ULIB = $(BUILD_LIB)/ulib.o $(BUILD_LIB)/usys.o $(BUILD_LIB)/printf.o $(BUILD_LIB)/umalloc.o \
        $(BUILD_LIB)/math.o $(BUILD_LIB)/string.o $(BUILD_LIB)/stdio.o $(BUILD_LIB)/list.o \
        $(BUILD_LIB)/hashmap.o $(BUILD_LIB)/inflate.o $(BUILD_LIB)/graphics.o $(BUILD_LIB)/sdf.o \
-	   $(BUILD_LIB)/png.o $(BUILD_LIB)/jpeg.o
+	   $(BUILD_LIB)/png.o $(BUILD_LIB)/jpeg.o $(BUILD_LIB)/terminal-font.o
 
 $(BUILD_LIB)/%.o: $(LIB)/%.c
 	@mkdir -p build build/lib
@@ -203,10 +203,20 @@ $(BUILD_BIN)/%.o: $(BIN)/%.S
 	$(CC) $(ASFLAGS) -c -o $@ $<
 
 $(BUILD_BIN)/_%: $(BUILD_BIN)/%.o $(ULIB)
-	@mkdir -p build build/bin
+	@mkdir -p build build/bin build/bin/window_server
 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^
 	$(OBJDUMP) -S $@ > $(BUILD_BIN)/$*.asm
 	$(OBJDUMP) -t $@ | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $(BUILD_BIN)/$*.sym
+
+WINDOW_SERVER = $(BUILD_BIN)/window_server
+WINDOW_SERVER_OBJ = $(WINDOW_SERVER)/main.o \
+					$(WINDOW_SERVER)/screen.o \
+					$(WINDOW_SERVER)/gfx.o \
+					$(WINDOW_SERVER)/taskbar.o \
+					$(WINDOW_SERVER)/window.o
+$(BUILD_BIN)/_ws: $(WINDOW_SERVER_OBJ) $(ULIB)
+	@mkdir -p build/bin/window_server
+	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^
 
 $(BUILD_BIN)/_forktest: $(BUILD_BIN)/forktest.o $(ULIB)
     # forktest has less library code linked in - needs to be small
@@ -247,6 +257,7 @@ UPROGS=\
 	$(BUILD_BIN)/_ifconfig\
 	$(BUILD_BIN)/_stdfile\
 	$(BUILD_BIN)/_video\
+	$(BUILD_BIN)/_ws\
 
 
 RES = resources/cursor/normal.png \

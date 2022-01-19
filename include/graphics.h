@@ -14,7 +14,7 @@
 #define _ALP(color) ((color & 0xFF000000) / 0x1000000)
 
 /*
- * Macros make verything easier.
+ * Macros make everything easier.
  */
 #define GFX(ctx,x,y) *((uint32_t *)&((ctx)->backbuffer)[(GFX_S(ctx) * (y) + (x) * GFX_B(ctx))])
 #define GFXR(ctx,x,y) *((uint32_t *)&((ctx)->buffer)[(GFX_S(ctx) * (y) + (x) * GFX_B(ctx))])

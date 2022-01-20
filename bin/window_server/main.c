@@ -10,16 +10,17 @@
 #include "taskbar.h"
 
 int main() {
-    SCREEN *ctx = open_screen();
+    // open screen
+    SCREEN *screen = open_screen();
 
     // backgroud
-    rectangle_fill((unsigned char *)ctx->buffer, 1024, 0, 0, ctx->width-1, ctx->height-1, RGB_008484);
+    rectangle_fill((unsigned char *)screen->buffer, 1024, 0, 0, screen->width-1, screen->height-1, RGB_008484);
 
     // task bar
-    draw_taskbar((unsigned char *)ctx->buffer, ctx->width, ctx->height);
+    draw_taskbar((unsigned char *)screen->buffer, screen->width, screen->height);
 
     // mouse
-    SHTCTL *shtctl = shtctl_init((unsigned char *)ctx->buffer, ctx->width, ctx->height);
+    SHTCTL *shtctl = shtctl_init((unsigned char *)screen->buffer, screen->width, screen->height);
     unsigned char *buf_mouse = malloc(16*16*SCREEN_B);
     SHEET *sht_mouse = sheet_alloc(shtctl);
 	sheet_setbuf(sht_mouse, buf_mouse, 16, 16, RGB_008484);

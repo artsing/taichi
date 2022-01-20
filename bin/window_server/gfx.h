@@ -14,6 +14,4 @@ extern void rectangle_fill(gfx_context_t *ctx, int x0, int y0, int x1, int y1, u
 extern void putchar_ascii(gfx_context_t *ctx, int x, int y, uint32_t color, int val);
 extern void putfonts_ascii(gfx_context_t *ctx, int x, int y, uint32_t c, char* s);
 
-//
-
 #endif

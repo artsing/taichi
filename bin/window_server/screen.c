@@ -8,29 +8,28 @@
 #include "taskbar.h"
 #include "window.h"
 #include "cursor.h"
+#include "sheet.h"
 
 #ifndef BUF_SIZE
 #define BUF_SIZE(ctx) (GFX_W(ctx) * GFX_H(ctx) * GFX_B(ctx))
 #endif
 
-int screen_fd;
-gfx_context_t screen;
+SCREEN screen;
 
-void open_screen() {
-    screen_fd = open("/dev/fb0", O_RDWR);
-    if (screen_fd < 0) {
+SCREEN* open_screen() {
+    int fd = open("/dev/fb0", O_RDWR);
+    if (fd < 0) {
         printf(2, "open /dev/fb0 failed.\n");
         exit();
     }
 
-    int fd = screen_fd;
-    gfx_context_t *ctx = &screen;
+    SCREEN *ctx = &screen;
+    ctx->fd = fd;
 
     int err = ioctl(fd, 1, &(ctx->width));
     if (err < 0) {
         printf(2, "ioctl /dev/fb0 failed.\n");
     }
-    ctx->stride = ctx->width * 4;
 
     err = ioctl(fd, 2, &(ctx->height));
     if (err < 0) {
@@ -52,33 +51,17 @@ void open_screen() {
         printf(2, "ioctl /dev/fb0 failed.\n");
     }
 
-    ctx->clips = NULL;
-    int size = BUF_SIZE(ctx);
-    ctx->backbuffer = malloc(size);
-
-    // backgroud
-    rectangle_fill((unsigned char *)ctx->backbuffer, 1024, 0, 0, ctx->width-1, ctx->height-1, RGB_008484);
-
-    draw_taskbar((unsigned char *)ctx->backbuffer, ctx->width, ctx->height);
-
-    //draw_window((unsigned char *)ctx->backbuffer, 100, 100, 320, 200, "Terminal");
-    init_mouse_cursor8((unsigned char *)ctx->backbuffer, RGB_008484);
-
     printf(1, "screen ={width:%d, height:%d, depth:%d, size:%d, buffer:%x}\n",
            ctx->width,
            ctx->height,
            ctx->depth,
            ctx->size,
            ctx->buffer);
+    return ctx;
 }
 
 void close_screen() {
-    if (screen_fd) {
-        close(screen_fd);
+    if (screen.fd) {
+        close(screen.fd);
     }
-}
-
-void blit_screen() {
-    gfx_context_t *ctx = &screen;
-    memcpy(ctx->buffer, ctx->backbuffer, BUF_SIZE(ctx));
 }

@@ -2,6 +2,7 @@
 #define _WS_SHEET_H_
 
 #define MAX_SHEETS 64
+#include <stdint.h>
 
 typedef struct sheet {
     unsigned char *buf;
@@ -10,7 +11,7 @@ typedef struct sheet {
     int bxsize;
     int bysize;
     int height;
-    int col_inv;
+    uint32_t col_inv;
     int flags;
     struct shtctl *ctl;
 } SHEET;
@@ -28,7 +29,7 @@ typedef struct shtctl {
 
 SHTCTL *shtctl_init(unsigned char *vram, int xsize, int ysize);
 SHEET *sheet_alloc(SHTCTL *ctl);
-void sheet_setbuf(SHEET *sht, unsigned char *buf, int xsize, int ysize, int col_inv);
+void sheet_setbuf(SHEET *sht, unsigned char *buf, int xsize, int ysize, uint32_t col_inv);
 void sheet_updown(SHEET *sht, int height);
 void sheet_refresh(SHEET *sht, int bx0, int by0, int bx1, int by1);
 void sheet_slide(SHEET *sht, int vx0, int vy0);

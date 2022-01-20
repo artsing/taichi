@@ -214,7 +214,8 @@ WINDOW_SERVER_OBJ = $(WINDOW_SERVER)/main.o \
 					$(WINDOW_SERVER)/gfx.o \
 					$(WINDOW_SERVER)/taskbar.o \
 					$(WINDOW_SERVER)/window.o \
-					$(WINDOW_SERVER)/sheet.o
+					$(WINDOW_SERVER)/sheet.o \
+					$(WINDOW_SERVER)/cursor.o
 
 $(BUILD_BIN)/_ws: $(WINDOW_SERVER_OBJ) $(ULIB)
 	@mkdir -p build/bin/window_server

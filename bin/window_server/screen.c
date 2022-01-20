@@ -7,6 +7,7 @@
 #include "screen.h"
 #include "taskbar.h"
 #include "window.h"
+#include "cursor.h"
 
 #ifndef BUF_SIZE
 #define BUF_SIZE(ctx) (GFX_W(ctx) * GFX_H(ctx) * GFX_B(ctx))
@@ -55,11 +56,13 @@ void open_screen() {
     int size = BUF_SIZE(ctx);
     ctx->backbuffer = malloc(size);
 
-    draw_fill(ctx, RGB_008484);
+    // backgroud
+    rectangle_fill((unsigned char *)ctx->backbuffer, 1024, 0, 0, ctx->width-1, ctx->height-1, RGB_008484);
 
-    draw_taskbar(ctx, ctx->width, ctx->height);
+    draw_taskbar((unsigned char *)ctx->backbuffer, ctx->width, ctx->height);
 
-    draw_window(ctx, 100, 100, 320, 200, "Terminal");
+    //draw_window((unsigned char *)ctx->backbuffer, 100, 100, 320, 200, "Terminal");
+    init_mouse_cursor8((unsigned char *)ctx->backbuffer, RGB_008484);
 
     printf(1, "screen ={width:%d, height:%d, depth:%d, size:%d, buffer:%x}\n",
            ctx->width,

@@ -2,7 +2,8 @@
 #define _WS_CURSOR_H_
 
 #include "theme.h"
+#include "gfx.h"
 
-void init_mouse_cursor8(char *mouse, char bc);
+void init_mouse_cursor8(unsigned char *mouse, char bc);
 
 #endif

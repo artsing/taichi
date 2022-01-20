@@ -2,10 +2,9 @@
 #define _WS_TASKBAR_H_
 
 #include <stdint.h>
-#include <graphics.h>
 #include "theme.h"
 #include "gfx.h"
 
-extern void draw_taskbar(gfx_context_t *ctx, int xsize, int ysize);
+extern void draw_taskbar(unsigned char *vram, int xsize, int ysize);
 
 #endif

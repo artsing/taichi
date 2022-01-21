@@ -22,15 +22,26 @@ int main() {
     unsigned char *buf_back  = malloc(screen->width * screen->height * SCREEN_B);
     sheet_setbuf(sht_back, buf_back, screen->width, screen->height, -1); /* 无透明色 */
     rectangle_fill(buf_back, screen->width, 0, 0, screen->width-1, screen->height-1, RGB_008484);
+    sheet_slide(sht_back, 0, 0);
 
     // task bar
-    //draw_taskbar((unsigned char *)screen->buffer, screen->width, screen->height);
+    SHEET *sht_task = sheet_alloc(shtctl);
+    int task_w = screen->width;
+    int task_h = 28;
+    int task_x = 0, task_y = screen->height-task_h;
+    unsigned char *buf_task = malloc(task_w * task_h * SCREEN_B);
+    sheet_setbuf(sht_task, buf_task, task_w, task_h, -1);
+    draw_taskbar(buf_task, task_w, task_h);
+    sheet_slide(sht_task, task_x, task_y);
 
     // mouse
-    unsigned char *buf_mouse = malloc(16*16*SCREEN_B);
+    unsigned char *buf_mouse = malloc(16 * 16 * SCREEN_B);
     SHEET *sht_mouse = sheet_alloc(shtctl);
     sheet_setbuf(sht_mouse, buf_mouse, 16, 16, 99);
     init_mouse_cursor8(buf_mouse, 99);
+    int cursor_x = screen->width / 2;
+    int cursor_y = screen->height / 2;
+    sheet_slide(sht_mouse, cursor_x, cursor_y);
 
     // window
     int win_w = 400, win_h = 300;
@@ -38,18 +49,12 @@ int main() {
     unsigned char *buf_win = malloc(win_w * win_h * SCREEN_B);
     sheet_setbuf(sht_win, buf_win, win_w, win_h, -1);
     draw_window(buf_win, win_w, win_h, "Terminal");
-
-    sheet_slide(sht_back, 0, 0);
-
     int win_x = 100, win_y = 100;
     sheet_slide(sht_win, win_x, win_y);
 
-    int cursor_x = screen->width / 2;
-    int cursor_y = screen->height / 2;
-    sheet_slide(sht_mouse, cursor_x, cursor_y);
-
     sheet_updown(sht_back, 0);
     sheet_updown(sht_win, 1);
+    sheet_updown(sht_task, 2);
     sheet_updown(sht_mouse, 3);
 
     FILE *mouse = fopen("/dev/mouse", "w");

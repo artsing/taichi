@@ -8,28 +8,78 @@
 #include "sheet.h"
 #include "cursor.h"
 #include "taskbar.h"
+#include "window.h"
 
 int main() {
     // open screen
     SCREEN *screen = open_screen();
 
+    // sheet controller
+    SHTCTL *shtctl = shtctl_init(screen->buffer, screen->width, screen->height);
+
     // backgroud
-    rectangle_fill((unsigned char *)screen->buffer, 1024, 0, 0, screen->width-1, screen->height-1, RGB_008484);
+    SHEET *sht_back  = sheet_alloc(shtctl);
+    unsigned char *buf_back  = malloc(screen->width * screen->height * SCREEN_B);
+    sheet_setbuf(sht_back, buf_back, screen->width, screen->height, -1); /* 无透明色 */
+    rectangle_fill(buf_back, screen->width, 0, 0, screen->width-1, screen->height-1, RGB_008484);
 
     // task bar
-    draw_taskbar((unsigned char *)screen->buffer, screen->width, screen->height);
+    //draw_taskbar((unsigned char *)screen->buffer, screen->width, screen->height);
 
     // mouse
-    SHTCTL *shtctl = shtctl_init((unsigned char *)screen->buffer, screen->width, screen->height);
     unsigned char *buf_mouse = malloc(16*16*SCREEN_B);
     SHEET *sht_mouse = sheet_alloc(shtctl);
-	sheet_setbuf(sht_mouse, buf_mouse, 16, 16, RGB_008484);
-    init_mouse_cursor8(buf_mouse, RGB_008484);
-    sheet_slide(sht_mouse, 100, 100);
-    sheet_updown(sht_mouse, 0);
+    sheet_setbuf(sht_mouse, buf_mouse, 16, 16, 99);
+    init_mouse_cursor8(buf_mouse, 99);
 
+    // window
+    int win_w = 320, win_h = 200;
+    SHEET *sht_win = sheet_alloc(shtctl);
+    unsigned char *buf_win = malloc(win_w * win_h * SCREEN_B);
+    sheet_setbuf(sht_win, buf_win, win_w, win_h, -1);
+    draw_window(buf_win, win_w, win_h, "Terminal");
+
+    sheet_slide(sht_back, 0, 0);
+    sheet_slide(sht_win, 50, 50);
+
+    int cursor_x=0, cursor_y=0;
+    sheet_slide(sht_mouse, cursor_x, cursor_y);
+
+    sheet_updown(sht_back, 0);
+    sheet_updown(sht_win, 1);
+    sheet_updown(sht_mouse, 3);
+
+    FILE *mouse = fopen("/dev/mouse", "w");
+    if (mouse == NULL) {
+        printf(1, "open /dev/mouse failed\n");
+    } else {
+        printf(1, "open /dev/mouse succes.\n");
+    }
+
+    mouse_packet_t *packets = malloc(sizeof(mouse_packet_t) * 1024);
     do {
+        size_t n = fread(packets, sizeof(mouse_packet_t), 1024, mouse);
+        if (n >0) {
+            for (int i=0; i<n; i++) {
+                mouse_packet_t packet = packets[i];
+                if (packet.magic == MOUSE_MAGIC) {
+                    // update cursor position x and y
+                    cursor_x = cursor_x + packet.x;
+                    if (cursor_x < 0)
+                        cursor_x = 0;
+                    if (cursor_x > screen->width - 1)
+                        cursor_x = screen->width - 1;
 
+                    cursor_y = cursor_y - packet.y;
+                    if (cursor_y < 0)
+                        cursor_y = 0;
+                    if (cursor_y > screen->height - 1)
+                        cursor_y = screen->height - 1;
+
+                    sheet_slide(sht_mouse, cursor_x, cursor_y);
+                }
+            }
+        }
     } while (1);
 
     close_screen();

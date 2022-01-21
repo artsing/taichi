@@ -4,6 +4,6 @@
 #include "theme.h"
 #include "gfx.h"
 
-void init_mouse_cursor8(unsigned char *mouse, uint32_t bc);
+void init_mouse_cursor8(unsigned char *mouse, int bc);
 
 #endif

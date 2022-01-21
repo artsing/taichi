@@ -13,7 +13,7 @@ SHTCTL *shtctl_init(unsigned char *vram, int xsize, int ysize)
 	if (ctl == 0) {
 		goto err;
 	}
-	ctl->map = (unsigned char *) malloc(xsize * ysize);
+	ctl->map = malloc(xsize * ysize);
 	if (ctl->map == 0) {
 		free(ctl);
 		goto err;
@@ -45,7 +45,7 @@ SHEET *sheet_alloc(SHTCTL *ctl)
 	return 0;  /* 所有的SHEET都处于正在使用状态*/
 }
 
-void sheet_setbuf(SHEET *sht, unsigned char *buf, int xsize, int ysize, uint32_t col_inv)
+void sheet_setbuf(SHEET *sht, unsigned char *buf, int xsize, int ysize, int col_inv)
 {
 	sht->buf = buf;
 	sht->bxsize = xsize;
@@ -100,11 +100,12 @@ void sheet_refreshmap(SHTCTL *ctl, int vx0, int vy0, int vx1, int vy1, int h0)
 			}
 		} else {
 			/*有透明色图层用的普通版*/
+            uint32_t *p = (uint32_t *)buf;
 			for (by = by0; by < by1; by++) {
 				vy = sht->vy0 + by;
 				for (bx = bx0; bx < bx1; bx++) {
 					vx = sht->vx0 + bx;
-					if (buf[by * sht->bxsize + bx] != sht->col_inv) {
+					if (p[by * sht->bxsize + bx] != sht->col_inv) {
 						map[vy * ctl->xsize + vx] = sid;
 					}
 				}
@@ -241,4 +242,15 @@ void sheet_free(SHEET *sht)
 	}
 	sht->flags = 0; /* "未使用"标志 */
 	return;
+}
+
+void dump_map(SHTCTL *ctl) {
+    printf(1, "start");
+    for (int y = 0; y < ctl->ysize; y++) {
+        for (int x = 0; x < ctl->xsize; x++) {
+            printf(1, "%c", ctl->map[y * ctl->xsize + x]);
+        }
+        printf(1, "\n");
+    }
+    printf(1, "end");
 }

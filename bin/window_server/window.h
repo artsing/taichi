@@ -5,6 +5,6 @@
 #include "theme.h"
 #include "gfx.h"
 
-void draw_window(unsigned char *ctx, int x, int y, int xsize, int ysize, char *title);
+void draw_window(unsigned char *ctx, int xsize, int ysize, char *title);
 
 #endif

@@ -33,16 +33,19 @@ int main() {
     init_mouse_cursor8(buf_mouse, 99);
 
     // window
-    int win_w = 320, win_h = 200;
+    int win_w = 400, win_h = 300;
     SHEET *sht_win = sheet_alloc(shtctl);
     unsigned char *buf_win = malloc(win_w * win_h * SCREEN_B);
     sheet_setbuf(sht_win, buf_win, win_w, win_h, -1);
     draw_window(buf_win, win_w, win_h, "Terminal");
 
     sheet_slide(sht_back, 0, 0);
-    sheet_slide(sht_win, 50, 50);
 
-    int cursor_x=0, cursor_y=0;
+    int win_x = 100, win_y = 100;
+    sheet_slide(sht_win, win_x, win_y);
+
+    int cursor_x = screen->width / 2;
+    int cursor_y = screen->height / 2;
     sheet_slide(sht_mouse, cursor_x, cursor_y);
 
     sheet_updown(sht_back, 0);
@@ -57,6 +60,7 @@ int main() {
     }
 
     mouse_packet_t *packets = malloc(sizeof(mouse_packet_t) * 1024);
+    bool move_win = false;
     do {
         size_t n = fread(packets, sizeof(mouse_packet_t), 1024, mouse);
         if (n >0) {
@@ -77,6 +81,17 @@ int main() {
                         cursor_y = screen->height - 1;
 
                     sheet_slide(sht_mouse, cursor_x, cursor_y);
+                    if (packet.buttons == LEFT_CLICK) {
+                        int x0 = cursor_x - win_x;
+                        int y0 = cursor_y - win_y;
+                        if ((x0 > 3 && x0 < win_w - 25 && y0 > 1 && y0 < 20)
+                            || move_win) {
+                            move_win = true;
+                            sheet_slide(sht_win, win_x += packet.x, win_y -= packet.y);
+                        }
+                    } else {
+                        move_win = false;
+                    }
                 }
             }
         }

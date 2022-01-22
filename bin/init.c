@@ -27,6 +27,12 @@ main(void)
         mknod("/dev/mouse", 3, 1);
     }
 
+    if (open("/dev/kbd", O_RDWR) < 0) {
+        printf(1, "open kbd start\n");
+        mknod("/dev/kbd", 4, 1);
+        printf(1, "open kbd end\n");
+    }
+
     pid = fork();
     if (pid == 0) {
         exec("/bin/ws", argv);

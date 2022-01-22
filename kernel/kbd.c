@@ -1,7 +1,21 @@
 #include "types.h"
 #include "x86.h"
 #include "defs.h"
+#include "param.h"
+#include "spinlock.h"
+#include "sleeplock.h"
+#include "fs.h"
+#include "file.h"
 #include "kbd.h"
+
+static struct {
+    struct spinlock lock;
+    int locking;
+
+    char keys[KBD_KEYS];
+    int pos;
+    int read_pos;
+} keyboard;
 
 int
 kbdgetc(void)
@@ -40,11 +54,73 @@ kbdgetc(void)
     else if('A' <= c && c <= 'Z')
       c += 'a' - 'A';
   }
+
+  if (keyboard.locking) {
+      acquire(&keyboard.lock);
+  }
+
+    // buffer full
+    if (((keyboard.pos + 1) % KBD_KEYS) != keyboard.read_pos) {
+            keyboard.keys[keyboard.pos] = c;
+            keyboard.pos = (keyboard.pos + 1) % KBD_KEYS;
+    }
+
+  if (keyboard.locking) {
+      release(&keyboard.lock);
+  }
   return c;
+}
+
+int
+dev_keyboard_read(struct inode *ip, char *dst, int n) {
+retry:
+    if (keyboard.locking) {
+        acquire(&keyboard.lock);
+    }
+
+    if (keyboard.read_pos == keyboard.pos) {
+        if (keyboard.locking) {
+            release(&keyboard.lock);
+        }
+        yield();
+        goto retry;
+    }
+
+    for (int i=0; i<n; i++) {
+        // buffer is empty
+        if (keyboard.read_pos == keyboard.pos) {
+            return i;
+        }
+
+        *(dst++) = keyboard.keys[keyboard.read_pos];
+        keyboard.keys[keyboard.read_pos] = 0;
+        keyboard.read_pos = (keyboard.read_pos + 1) % KBD_KEYS;
+    }
+
+    if (keyboard.locking) {
+        release(&keyboard.lock);
+    }
+
+    return n;
+}
+
+int
+dev_keyboard_write(struct inode *ip, char *buf, int n)
+{
+    return -1;
+}
+
+int
+dev_keyboard_ioctl(struct inode* ip, int req, void* arg) {
+    return -1;
 }
 
 void
 kbdintr(void)
 {
-  consoleintr(kbdgetc);
+    devsw[KEYBOARD].write = dev_keyboard_write;
+    devsw[KEYBOARD].read = dev_keyboard_read;
+    devsw[KEYBOARD].ioctl = dev_keyboard_ioctl;
+
+    consoleintr(kbdgetc);
 }

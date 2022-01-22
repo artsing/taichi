@@ -65,6 +65,21 @@ int main() {
         printf(1, "open /dev/mouse succes.\n");
     }
 
+    FILE *kbd = fopen("/dev/kbd", "w");
+    if (kbd == NULL) {
+        printf(1, "open /dev/kbd failed\n");
+    } else {
+        printf(1, "open /dev/kbd succes\n");
+    }
+
+    char *keys = malloc(512);
+    size_t n = fread(keys, 1, 512, kbd);
+    if (n > 0) {
+        for (int i=0; i<n; i++) {
+            printf(1, "%c", keys[i]);
+        }
+    }
+
     mouse_packet_t *packets = malloc(sizeof(mouse_packet_t) * 1024);
     bool move_win = false;
     do {

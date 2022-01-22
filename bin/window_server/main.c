@@ -33,6 +33,7 @@ int main() {
     sheet_setbuf(sht_task, buf_task, task_w, task_h, -1);
     draw_taskbar(buf_task, task_w, task_h);
     sheet_slide(sht_task, task_x, task_y);
+    add_taskbar_btn(sht_task, "Terminal");
 
     // mouse
     unsigned char *buf_mouse = malloc(16 * 16 * SCREEN_B);
@@ -99,6 +100,12 @@ int main() {
                             sheet_slide(sht_win, win_x += packet.x, win_y -= packet.y);
                         } else if (x0 > win_w - 25 && x0 < win_w -3 && y0 > 3 && y0 < 16) {
                             sheet_updown(sht_win, -1);
+                        } else {
+                            int x1 = cursor_x - task_x;
+                            int y1 = cursor_y - task_y;
+                            if (x1 > 4 && x1 < 72 && y1 > 4 && y1 < 24) {
+                                sheet_updown(sht_win, 1);
+                            }
                         }
                     } else {
                         move_win = false;

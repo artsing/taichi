@@ -115,6 +115,7 @@ extern int sys_send(void);
 extern int sys_recvfrom(void);
 extern int sys_sendto(void);
 extern int sys_seek(void);
+extern int sys_select(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -150,6 +151,7 @@ static int (*syscalls[])(void) = {
 [SYS_recvfrom] sys_recvfrom,
 [SYS_sendto]   sys_sendto,
 [SYS_seek]     sys_seek,
+[SYS_select]   sys_select,
 };
 
 void

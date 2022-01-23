@@ -33,3 +33,4 @@
 #define SYS_sendto   31
 
 #define SYS_seek     32
+#define SYS_select   33

@@ -43,3 +43,6 @@ SYSCALL(sendto)
 
 # seek
 SYSCALL(seek)
+
+# select
+SYSCALL(select)

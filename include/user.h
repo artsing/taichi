@@ -1,5 +1,6 @@
 #ifndef _USER_H_
 #define _USER_H_
+#include <fd_set.h>
 struct stat;
 struct rtcdate;
 struct sockaddr;
@@ -41,6 +42,7 @@ int recvfrom(int, char*, int, struct sockaddr*, int*);
 int sendto(int, char*, int, struct sockaddr*, int);
 
 int seek(int, int, int);
+int select(int nfd, fd_set *readfds, fd_set *writefds, fd_set *exceptfds);
 
 #endif /*_SYSCALL_*/
 

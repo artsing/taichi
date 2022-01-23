@@ -190,4 +190,9 @@ extern int getchar (void);
  */
 extern int putchar (int c);
 
+/**
+ * get fd
+ */
+extern int fgetfd(FILE *stream);
+
 #endif /* _STDIO_H_ */

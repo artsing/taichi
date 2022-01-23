@@ -72,6 +72,16 @@ int main() {
         printf(1, "open /dev/kbd succes\n");
     }
 
+
+    fd_set fds;
+    int mouse_fd = fgetfd(mouse);
+    int kbd_fd = fgetfd(kbd);
+    FD_SET(mouse_fd, &fds);
+    FD_SET(kbd_fd, &fds);
+    int max_fd = mouse_fd > kbd_fd ? mouse_fd : kbd_fd;
+    int res = select(max_fd + 1, &fds, NULL, NULL);
+    printf(1, "select = %d\n", res);
+
     char *keys = malloc(512);
     size_t n = fread(keys, 1, 512, kbd);
     if (n > 0) {

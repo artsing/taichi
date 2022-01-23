@@ -16,6 +16,7 @@
 #include "file.h"
 #include "fcntl.h"
 #include "ioccom.h"
+#include "fd_set.h"
 
 // Fetch the nth word-sized system call argument as a file descriptor
 // and return both the descriptor and the corresponding struct file.
@@ -475,4 +476,33 @@ sys_ioctl(void)
         return -1;
     }
     return fileioctl(f, req, arg);
+}
+
+int
+sys_select(void)
+{
+    int nfd;
+    fd_set *readfds;
+
+    if(argint(0, &nfd) < 0) {
+        return -1;
+    }
+
+    if(argptr(1, (void*)&readfds, IOCPARM_LEN(nfd)) < 0) {
+        return -1;
+    }
+
+    cprintf("nfd = %d\n", nfd);
+    for (int fd = 0; fd < nfd; fd++) {
+        if (readfds && FD_ISSET(fd, readfds)) {
+        } else {
+            continue;
+        }
+
+        struct file *f;
+        if(fd < 0 || fd >= NOFILE || (f=myproc()->ofile[fd]) == 0)
+            return -1;
+    }
+
+    return 0;
 }

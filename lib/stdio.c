@@ -287,3 +287,10 @@ int getchar (void) {
 int putchar (int c) {
     return -1;
 }
+
+/**
+ * get FILE fd
+ */
+int fgetfd(FILE *stream) {
+    return stream->fd;
+}

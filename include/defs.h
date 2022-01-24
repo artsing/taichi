@@ -35,6 +35,7 @@ int             fileseek(struct file*, int offset, int whence);
 int             filestat(struct file*, struct stat*);
 int             filewrite(struct file*, char*, int n);
 int             fileioctl(struct file*, int, void*);
+int             fileselect(int n, struct file**);
 
 // fs.c
 void            readsb(int dev, struct superblock *sb);
@@ -123,6 +124,8 @@ void            userinit(void);
 int             wait(void);
 void            wakeup(void*);
 void            yield(void);
+void            block(void);
+void            unblock(int pid);
 
 // swtch.S
 void            swtch(struct context**, struct context*);

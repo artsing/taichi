@@ -204,3 +204,16 @@ fileioctl(struct file *f, int req, void *arg)
 
     return r;
 }
+
+int
+fileselect(int n, struct file **files)
+{
+    for (int i = 0; i < n; i++) {
+        struct file *f = files[i];
+        if (f == NULL) {
+            return -1;
+        }
+    }
+
+    return -1;
+}

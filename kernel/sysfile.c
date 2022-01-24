@@ -493,6 +493,8 @@ sys_select(void)
     }
 
     cprintf("nfd = %d\n", nfd);
+    struct file *files[512] = {0};
+    int n = 0;
     for (int fd = 0; fd < nfd; fd++) {
         if (readfds && FD_ISSET(fd, readfds)) {
         } else {
@@ -502,7 +504,17 @@ sys_select(void)
         struct file *f;
         if(fd < 0 || fd >= NOFILE || (f=myproc()->ofile[fd]) == 0)
             return -1;
+
+        if (n >= 512) {
+            return -1;
+        }
+        files[n++] = f;
     }
 
-    return 0;
+    int res = fileselect(n, files);
+    if (res > 0) {
+        block();
+    }
+
+    return 1;
 }

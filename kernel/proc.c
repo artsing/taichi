@@ -396,6 +396,31 @@ yield(void)
   release(&ptable.lock);
 }
 
+// Block current proc
+void
+block(void)
+{
+    acquire(&ptable.lock);
+    myproc()->state = BLOCKED;
+    sched();
+    release(&ptable.lock);
+}
+
+// Unblock the pid proc
+void
+unblock(int pid)
+{
+    struct proc *p;
+
+    acquire(&ptable.lock);
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+        if (p->pid == pid && p->state == BLOCKED) {
+                p->state = RUNNABLE;
+        }
+    }
+    release(&ptable.lock);
+}
+
 // A fork child's very first scheduling by scheduler()
 // will swtch here.  "Return" to user space.
 void

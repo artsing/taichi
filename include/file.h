@@ -32,6 +32,8 @@ struct devsw {
     int (*read)(struct inode*, char*, int);
     int (*write)(struct inode*, char*, int);
     int (*ioctl)(struct inode*, int request, void* argp);
+    int (*block)(struct inode*, int pid);
+    int (*unblock)(struct inode*, int pid);
 };
 
 extern struct devsw devsw[];

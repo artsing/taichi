@@ -3,5 +3,5 @@
     
 ** run
 #+BEGIN_QUOTE
-    make
+    make qemu
 #+END_QUOTE

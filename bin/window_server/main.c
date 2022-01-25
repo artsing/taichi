@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <time.h>
 #include <user.h>
 #include <mouse.h>
 #include <stdio.h>
@@ -76,10 +77,13 @@ int main() {
     fd_set fds;
     int mouse_fd = fgetfd(mouse);
     int kbd_fd = fgetfd(kbd);
+
+    FD_ZERO(&fds);
     FD_SET(mouse_fd, &fds);
     FD_SET(kbd_fd, &fds);
     int max_fd = mouse_fd > kbd_fd ? mouse_fd : kbd_fd;
-    int res = select(max_fd + 1, &fds, NULL, NULL);
+
+    int res = select(max_fd + 1, &fds, NULL, NULL, NULL);
     printf(1, "select = %d\n", res);
 
     char *keys = malloc(512);

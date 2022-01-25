@@ -139,6 +139,7 @@ typedef __builtin_va_list va_list;
 typedef uint32_t ip_addr_t;
 
 typedef int32_t time_t;
+typedef int32_t suseconds_t;
 
 #endif
 

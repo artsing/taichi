@@ -47,6 +47,7 @@ struct proc {
     void *chan;                  // If non-zero, sleeping on chan
     int killed;                  // If non-zero, have been killed
     struct file *ofile[NOFILE];  // Open files
+    struct file *bfile[NBFILE];  // Block files
     struct inode *cwd;           // Current directory
     char name[16];               // Process name (debugging)
 };

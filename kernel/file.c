@@ -208,10 +208,16 @@ fileioctl(struct file *f, int req, void *arg)
 int
 fileselect(int n, struct file **files)
 {
+    int r = -1;
     for (int i = 0; i < n; i++) {
         struct file *f = files[i];
         if (f == NULL) {
             return -1;
+        }
+
+        r = select_checki(f->ip);
+        if (r != -1) {
+            return r;
         }
     }
 

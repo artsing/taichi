@@ -56,6 +56,7 @@ int             readi(struct inode*, char*, uint, uint);
 void            stati(struct inode*, struct stat*);
 int             writei(struct inode*, char*, uint, uint);
 int             ioctli(struct inode*, int req, void* arg);
+int             select_checki(struct inode*);
 
 // ide.c
 void            ideinit(void);

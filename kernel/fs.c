@@ -524,6 +524,18 @@ ioctli(struct inode *ip, int req, void *arg) {
 	return r;
 }
 
+int
+select_checki(struct inode *ip) {
+    int r = -1;
+    if(ip->type == T_DEV){
+		if(ip->major < 0 || ip->major >= NDEV || !devsw[ip->major].select_check) {
+			r = -1;
+		} else {
+			r = devsw[ip->major].select_check(ip);
+		}
+	}
+    return r;
+}
 
 //PAGEBREAK!
 // Directories

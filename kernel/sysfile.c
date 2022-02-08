@@ -493,7 +493,7 @@ sys_select(void)
     }
 
     cprintf("nfd = %d\n", nfd);
-    struct file *files[512] = {0};
+    struct file *files[NBFILE] = {0};
     int n = 0;
     for (int fd = 0; fd < nfd; fd++) {
         if (readfds && FD_ISSET(fd, readfds)) {

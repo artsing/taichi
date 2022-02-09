@@ -33,7 +33,7 @@ struct devsw {
     int (*write)(struct inode*, char*, int);
     int (*ioctl)(struct inode*, int request, void* argp);
     int (*select_check)(struct inode*);
-    int (*select_block)(struct inode*, int pid);
+    int (*select_block)(struct inode*, int pid, int fd);
 };
 
 extern struct devsw devsw[];

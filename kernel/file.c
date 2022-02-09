@@ -227,8 +227,9 @@ fileselect(int n, struct file **files, int *fds)
 
     for (int i = 0; i < n; i++) {
         struct file *f = files[i];
+        int fd = fds[i];
 
-        r = select_blocki(f->ip);
+        r = select_blocki(f->ip, fd);
         if (r < 0) {
             return r;  // error
         }

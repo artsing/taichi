@@ -38,6 +38,9 @@ static struct {
     int y;
 } mouse;
 
+static int mouse_block_pid = -1;
+static int mouse_block_fd = -1;
+
 static void mouse_wait(uint8_t a_type) {
 	uint32_t timeout = 100000;
 	if (!a_type) {
@@ -133,8 +136,10 @@ dev_mouse_select_check(struct inode* ip) {
 }
 
 int
-dev_mouse_select_block(struct inode*ip, int pid) {
-    return -1;
+dev_mouse_select_block(struct inode*ip, int pid, int fd) {
+    mouse_block_pid = pid;
+    mouse_block_fd = fd;
+    return 1;
 }
 
 void mouseintr() {

@@ -538,14 +538,14 @@ select_checki(struct inode *ip) {
 }
 
 int
-select_blocki(struct inode *ip) {
+select_blocki(struct inode *ip, int fd) {
     int r = -1;
     if(ip->type == T_DEV){
 		if(ip->major < 0 || ip->major >= NDEV || !devsw[ip->major].select_check) {
 			r = -1;
 		} else {
             struct proc *curproc = myproc();
-			r = devsw[ip->major].select_block(ip, curproc->pid);
+			r = devsw[ip->major].select_block(ip, curproc->pid, fd);
 		}
 	}
     return r;

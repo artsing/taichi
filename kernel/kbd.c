@@ -17,6 +17,9 @@ static struct {
     int read_pos;
 } keyboard;
 
+static int kbd_block_pid = -1;
+static int kbd_block_fd = -1;
+
 int
 kbdgetc(void)
 {
@@ -132,8 +135,10 @@ dev_keyboard_select_check(struct inode* ip) {
 }
 
 int
-dev_keyboard_select_block(struct inode*ip, int pid) {
-    return -1;
+dev_keyboard_select_block(struct inode*ip, int pid, int fd) {
+    kbd_block_pid = pid;
+    kbd_block_fd = fd;
+    return 1;
 }
 
 void

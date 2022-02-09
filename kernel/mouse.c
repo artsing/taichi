@@ -116,6 +116,16 @@ dev_mouse_ioctl(struct inode* ip, int req, void* arg) {
     return -1;
 }
 
+int
+dev_mouse_select_check(struct inode* ip) {
+    return -1;
+}
+
+int
+dev_mouse_select_block(struct inode*ip, int pid) {
+    return -1;
+}
+
 void mouseintr() {
 	uint8_t status = inb(MOUSE_STATUS);
 	while ((status & MOUSE_BBIT) && (status & MOUSE_F_BIT)) {
@@ -272,6 +282,8 @@ void mouseinit(void) {
     devsw[MOUSE].write = dev_mouse_write;
     devsw[MOUSE].read = dev_mouse_read;
     devsw[MOUSE].ioctl = dev_mouse_ioctl;
+    devsw[MOUSE].select_check = dev_mouse_select_check;
+    devsw[MOUSE].select_block = dev_mouse_select_block;
 
     ioapicenable(IRQ_MOUSE, 0);
 

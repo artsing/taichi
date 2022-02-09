@@ -115,12 +115,24 @@ dev_keyboard_ioctl(struct inode* ip, int req, void* arg) {
     return -1;
 }
 
+int
+dev_keyboard_select_check(struct inode* ip) {
+    return -1;
+}
+
+int
+dev_keyboard_select_block(struct inode*ip, int pid) {
+    return -1;
+}
+
 void
 kbdintr(void)
 {
     devsw[KEYBOARD].write = dev_keyboard_write;
     devsw[KEYBOARD].read = dev_keyboard_read;
     devsw[KEYBOARD].ioctl = dev_keyboard_ioctl;
+    devsw[KEYBOARD].select_check = dev_keyboard_select_check;
+    devsw[KEYBOARD].select_block = dev_keyboard_select_block;
 
     consoleintr(kbdgetc);
 }

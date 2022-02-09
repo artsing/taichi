@@ -221,5 +221,17 @@ fileselect(int n, struct file **files)
         }
     }
 
+    for (int i = 0; i < n; i++) {
+        struct file *f = files[i];
+        if (f == NULL) {
+            return -1;
+        }
+
+        r = select_checki(f->ip);
+        if (r != -1) {
+            return r;
+        }
+    }
+
     return -1;
 }

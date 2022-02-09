@@ -117,7 +117,18 @@ dev_keyboard_ioctl(struct inode* ip, int req, void* arg) {
 
 int
 dev_keyboard_select_check(struct inode* ip) {
-    return -1;
+    if (keyboard.locking) {
+        acquire(&keyboard.lock);
+    }
+
+    if (keyboard.read_pos == keyboard.pos) {
+        if (keyboard.locking) {
+            release(&keyboard.lock);
+        }
+        return 0;
+    }
+
+    return 1;
 }
 
 int

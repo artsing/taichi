@@ -415,7 +415,8 @@ unblock(int pid)
     acquire(&ptable.lock);
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
         if (p->pid == pid && p->state == BLOCKED) {
-                p->state = RUNNABLE;
+            p->awoken_fd = -1; // TODO awoken_fd
+            p->state = RUNNABLE;
         }
     }
     release(&ptable.lock);

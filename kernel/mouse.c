@@ -118,7 +118,18 @@ dev_mouse_ioctl(struct inode* ip, int req, void* arg) {
 
 int
 dev_mouse_select_check(struct inode* ip) {
-    return -1;
+    if (mouse.locking) {
+        acquire(&mouse.lock);
+    }
+
+    if (mouse.read_pos == mouse.pos) {
+        if (mouse.locking) {
+            release(&mouse.lock);
+        }
+        return 0;
+    }
+
+    return 1;
 }
 
 int

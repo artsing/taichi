@@ -35,7 +35,7 @@ int             fileseek(struct file*, int offset, int whence);
 int             filestat(struct file*, struct stat*);
 int             filewrite(struct file*, char*, int n);
 int             fileioctl(struct file*, int, void*);
-int             fileselect(int n, struct file**);
+int             fileselect(int n, struct file**, int*);
 
 // fs.c
 void            readsb(int dev, struct superblock *sb);
@@ -57,6 +57,7 @@ void            stati(struct inode*, struct stat*);
 int             writei(struct inode*, char*, uint, uint);
 int             ioctli(struct inode*, int req, void* arg);
 int             select_checki(struct inode*);
+int             select_blocki(struct inode*);
 
 // ide.c
 void            ideinit(void);

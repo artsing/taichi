@@ -206,7 +206,7 @@ fileioctl(struct file *f, int req, void *arg)
 }
 
 int
-fileselect(int n, struct file **files)
+fileselect(int n, struct file **files, int *fds)
 {
     int r = -1;
     for (int i = 0; i < n; i++) {
@@ -216,22 +216,23 @@ fileselect(int n, struct file **files)
         }
 
         r = select_checki(f->ip);
-        if (r != -1) {
-            return r;
+        if (r < 0) {
+            return r; // error
+        }
+
+        if (r > 0) {
+            return fds[i]; // ok
         }
     }
 
     for (int i = 0; i < n; i++) {
         struct file *f = files[i];
-        if (f == NULL) {
-            return -1;
-        }
 
-        r = select_checki(f->ip);
-        if (r != -1) {
-            return r;
+        r = select_blocki(f->ip);
+        if (r < 0) {
+            return r;  // error
         }
     }
 
-    return -1;
+    return 0;  // block
 }

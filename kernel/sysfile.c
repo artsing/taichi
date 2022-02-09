@@ -493,8 +493,13 @@ sys_select(void)
     }
 
     cprintf("nfd = %d\n", nfd);
+
+    int fds[NBFILE] = {-1};
     struct file *files[NBFILE] = {0};
     int n = 0;
+
+    struct proc* proc = myproc();
+
     for (int fd = 0; fd < nfd; fd++) {
         if (readfds && FD_ISSET(fd, readfds)) {
         } else {
@@ -502,19 +507,21 @@ sys_select(void)
         }
 
         struct file *f;
-        if(fd < 0 || fd >= NOFILE || (f=myproc()->ofile[fd]) == 0)
+        if(fd < 0 || fd >= NOFILE || (f=proc->ofile[fd]) == 0)
             return -1;
 
-        if (n >= 512) {
+        if (n >= NBFILE) {
             return -1;
         }
+        fds[n] = fd;
         files[n++] = f;
     }
 
-    int res = fileselect(n, files);
-    if (res > 0) {
+    int res = fileselect(n, files, fds);
+    if (res == 0) {
+        proc->awoken_fd = -1;
         block();
     }
 
-    return 1;
+    return proc->awoken_fd;
 }

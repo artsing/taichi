@@ -266,6 +266,9 @@ void            e1000intr(void);
 void            mouseinit(void);
 void            mouseintr(void);
 
+// kbd.c
+void            kbdinit(void);
+
 // lbf_video.c
 int lbf_video_init(struct pci_func *pcif);
 

@@ -76,34 +76,35 @@ static uint8_t mouse_read(void) {
 int
 dev_mouse_read(struct inode *ip, char *dst, int n)
 {
+    int res;
     if (mouse.locking) {
         acquire(&mouse.lock);
     }
 
     if (mouse.read_pos == mouse.pos) {
-        if (mouse.locking) {
-            release(&mouse.lock);
-        }
-        return 0;
+        res = 0;
+        goto ret;
     }
 
     mouse_packet_t* buf = (mouse_packet_t *)dst;
     for (int i=0; i<n; i++) {
         // buffer is empty
         if (mouse.read_pos == mouse.pos) {
-            return i;
+            res = i;
+            goto ret;
         }
 
         memcpy(buf++, &mouse.packets[mouse.read_pos], sizeof(mouse_packet_t));
         mouse.packets[mouse.read_pos].magic = 0;
         mouse.read_pos = (mouse.read_pos + 1) % MOUSE_PACKTES;
     }
+    res = n;
 
+ret:
     if (mouse.locking) {
         release(&mouse.lock);
     }
-
-    return n;
+    return res;
 }
 
 int
@@ -119,25 +120,32 @@ dev_mouse_ioctl(struct inode* ip, int req, void* arg) {
 
 int
 dev_mouse_select_check(struct inode* ip) {
+    int res;
     if (mouse.locking) {
         acquire(&mouse.lock);
     }
 
     if (mouse.read_pos == mouse.pos) {
-        if (mouse.locking) {
-            release(&mouse.lock);
-        }
-        return 0;
+        res = 0;
+    } else {
+        res = 1;
     }
 
-    return 1;
+    if (mouse.locking) {
+        release(&mouse.lock);
+    }
+    return res;
 }
 
 int
 dev_mouse_select_block(struct inode*ip, int pid, int fd) {
-    mouse_block_pid = pid;
-    mouse_block_fd = fd;
-    return 1;
+    if (mouse_block_pid == -1 && mouse_block_fd == -1) {
+        mouse_block_pid = pid;
+        mouse_block_fd = fd;
+        return 1;
+    }
+
+    return 0;
 }
 
 void mouseintr() {
@@ -245,6 +253,9 @@ read_next:
 void mouseinit(void) {
 	uint8_t status, result;
     cprintf("[MOUSE] init\n");
+
+    initlock(&mouse.lock, "mouse");
+    mouse.locking = 1;
 
 	while ((inb(0x64) & 1)) {
 		inb(0x60);

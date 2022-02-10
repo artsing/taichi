@@ -496,6 +496,8 @@ sys_select(void)
     struct file *files[NBFILE] = {0};
     int n = 0;
 
+    cprintf(">>>>>>>>debug<<<<<<<<<\n");
+
     struct proc* proc = myproc();
 
     for (int fd = 0; fd < nfd; fd++) {

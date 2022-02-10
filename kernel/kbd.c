@@ -77,33 +77,34 @@ kbdgetc(void)
 int
 dev_keyboard_read(struct inode *ip, char *dst, int n)
 {
+    int res;
     if (keyboard.locking) {
         acquire(&keyboard.lock);
     }
 
     if (keyboard.read_pos == keyboard.pos) {
-        if (keyboard.locking) {
-            release(&keyboard.lock);
-        }
-        return 0;
+        res = 0;
+        goto ret;
     }
 
     for (int i=0; i<n; i++) {
         // buffer is empty
         if (keyboard.read_pos == keyboard.pos) {
-            return i;
+            res = i;
+            goto ret;
         }
 
         *(dst++) = keyboard.keys[keyboard.read_pos];
         keyboard.keys[keyboard.read_pos] = 0;
         keyboard.read_pos = (keyboard.read_pos + 1) % KBD_KEYS;
     }
+    res = n;
 
+ret:
     if (keyboard.locking) {
         release(&keyboard.lock);
     }
-
-    return n;
+    return res;
 }
 
 int
@@ -119,25 +120,32 @@ dev_keyboard_ioctl(struct inode* ip, int req, void* arg) {
 
 int
 dev_keyboard_select_check(struct inode* ip) {
+    int res;
+
     if (keyboard.locking) {
         acquire(&keyboard.lock);
     }
 
     if (keyboard.read_pos == keyboard.pos) {
-        if (keyboard.locking) {
-            release(&keyboard.lock);
-        }
-        return 0;
+        res = 0;
+    } else {
+        res = 1;
     }
 
-    return 1;
+    if (keyboard.locking) {
+        release(&keyboard.lock);
+    }
+    return res;
 }
 
 int
 dev_keyboard_select_block(struct inode*ip, int pid, int fd) {
-    kbd_block_pid = pid;
-    kbd_block_fd = fd;
-    return 1;
+    if (kbd_block_pid == -1 && kbd_block_fd == -1) {
+        kbd_block_pid = pid;
+        kbd_block_fd = fd;
+        return 1;
+    }
+    return 0;
 }
 
 void
@@ -149,11 +157,18 @@ kbdintr(void)
     devsw[KEYBOARD].select_check = dev_keyboard_select_check;
     devsw[KEYBOARD].select_block = dev_keyboard_select_block;
 
-    consoleintr(kbdgetc);
-
     if (kbd_block_pid != -1 && kbd_block_fd != -1) {
         unblock(kbd_block_pid, kbd_block_fd);
         kbd_block_pid = -1;
         kbd_block_fd = -1;
     }
+
+    consoleintr(kbdgetc);
+
+}
+
+void
+kbdinit(void) {
+    initlock(&keyboard.lock, "keyboard");
+    keyboard.locking = 1;
 }

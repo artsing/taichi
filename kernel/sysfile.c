@@ -492,8 +492,6 @@ sys_select(void)
         return -1;
     }
 
-    cprintf("nfd = %d\n", nfd);
-
     int fds[NBFILE] = {-1};
     struct file *files[NBFILE] = {0};
     int n = 0;
@@ -518,7 +516,6 @@ sys_select(void)
     }
 
     int res = fileselect(n, files, fds);
-    cprintf("res = %d\n", res);
     if (res == 0) {
         proc->awoken_fd = -1;
         block();

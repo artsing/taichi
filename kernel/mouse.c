@@ -76,7 +76,6 @@ static uint8_t mouse_read(void) {
 int
 dev_mouse_read(struct inode *ip, char *dst, int n)
 {
-retry:
     if (mouse.locking) {
         acquire(&mouse.lock);
     }
@@ -85,8 +84,7 @@ retry:
         if (mouse.locking) {
             release(&mouse.lock);
         }
-        yield();
-        goto retry;
+        return 0;
     }
 
     mouse_packet_t* buf = (mouse_packet_t *)dst;
@@ -234,6 +232,11 @@ finish_packet:
 		}
 		write_fs(mouse_pipe, 0, sizeof(packet), (uint8_t *)&packet);
         */
+        if (mouse_block_pid != -1 && mouse_block_fd != -1) {
+            unblock(mouse_block_pid, mouse_block_fd);
+            mouse_block_pid = -1;
+            mouse_block_fd = -1;
+        }
 read_next:
 		break;
 	}

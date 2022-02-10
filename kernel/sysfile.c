@@ -518,6 +518,7 @@ sys_select(void)
     }
 
     int res = fileselect(n, files, fds);
+    cprintf("res = %d\n", res);
     if (res == 0) {
         proc->awoken_fd = -1;
         block();

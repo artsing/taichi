@@ -127,7 +127,7 @@ int             wait(void);
 void            wakeup(void*);
 void            yield(void);
 void            block(void);
-void            unblock(int pid);
+void            unblock(int pid, int fd);
 
 // swtch.S
 void            swtch(struct context**, struct context*);

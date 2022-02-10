@@ -408,14 +408,14 @@ block(void)
 
 // Unblock the pid proc
 void
-unblock(int pid)
+unblock(int pid, int fd)
 {
     struct proc *p;
 
     acquire(&ptable.lock);
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
         if (p->pid == pid && p->state == BLOCKED) {
-            p->awoken_fd = -1; // TODO awoken_fd
+            p->awoken_fd = fd;
             p->state = RUNNABLE;
         }
     }

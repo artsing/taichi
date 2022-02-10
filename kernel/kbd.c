@@ -75,8 +75,8 @@ kbdgetc(void)
 }
 
 int
-dev_keyboard_read(struct inode *ip, char *dst, int n) {
-retry:
+dev_keyboard_read(struct inode *ip, char *dst, int n)
+{
     if (keyboard.locking) {
         acquire(&keyboard.lock);
     }
@@ -85,8 +85,7 @@ retry:
         if (keyboard.locking) {
             release(&keyboard.lock);
         }
-        yield();
-        goto retry;
+        return 0;
     }
 
     for (int i=0; i<n; i++) {
@@ -151,4 +150,10 @@ kbdintr(void)
     devsw[KEYBOARD].select_block = dev_keyboard_select_block;
 
     consoleintr(kbdgetc);
+
+    if (kbd_block_pid != -1 && kbd_block_fd != -1) {
+        unblock(kbd_block_pid, kbd_block_fd);
+        kbd_block_pid = -1;
+        kbd_block_fd = -1;
+    }
 }

@@ -89,7 +89,6 @@ int main() {
 
         int fd = select(max_fd + 1, &fds, NULL, NULL, NULL);
         if (fd == mouse_fd) {
-            printf(1, "mouse event.\n");
             size_t n = fread(packets, sizeof(mouse_packet_t), 1024, mouse);
             if (n >0) {
                 for (int i=0; i<n; i++) {
@@ -136,11 +135,14 @@ int main() {
                 }
             }
         } else if (fd == kbd_fd) {
-            printf(1, "kbd event.\n");
             size_t n = fread(keys, 1, 512, kbd);
             if (n > 0) {
+                static int x = 20;
+                static int y = 30;
                 for (int i=0; i<n; i++) {
-                    printf(1, "%c", keys[i]);
+                    putchar_ascii(buf_win, win_w, x, y, RGB_000000, keys[i]);
+                    sheet_refresh(sht_win, x, y, x + 8, y + 20);
+                    x += 8;
                 }
             }
 

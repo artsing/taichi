@@ -49,3 +49,18 @@ void draw_window(unsigned char *ctx, int xsize, int ysize, char *title) {
         }
     }
 }
+
+void make_textbox(SHEET *sht, int x0, int y0, int sx, int sy, int c)
+{
+	int x1 = x0 + sx, y1 = y0 + sy;
+	rectangle_fill(sht->buf, sht->bxsize, x0 - 2, y0 - 3, x1 + 1, y0 - 3, RGB_848484);
+	rectangle_fill(sht->buf, sht->bxsize, x0 - 3, y0 - 3, x0 - 3, y1 + 1, RGB_848484);
+	rectangle_fill(sht->buf, sht->bxsize, x0 - 3, y1 + 2, x1 + 1, y1 + 2, RGB_FFFFFF);
+	rectangle_fill(sht->buf, sht->bxsize, x1 + 2, y0 - 3, x1 + 2, y1 + 2, RGB_FFFFFF);
+	rectangle_fill(sht->buf, sht->bxsize, x0 - 1, y0 - 2, x1 + 0, y0 - 2, RGB_000000);
+	rectangle_fill(sht->buf, sht->bxsize, x0 - 2, y0 - 2, x0 - 2, y1 + 0, RGB_000000);
+	rectangle_fill(sht->buf, sht->bxsize, x0 - 2, y1 + 1, x1 + 0, y1 + 1, RGB_C6C6C6);
+	rectangle_fill(sht->buf, sht->bxsize, x1 + 1, y0 - 2, x1 + 1, y1 + 1, RGB_C6C6C6);
+	rectangle_fill(sht->buf, sht->bxsize, x0 - 1, y0 - 1, x1 + 0, y1 + 0, c);
+	return;
+}

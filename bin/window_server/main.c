@@ -51,6 +51,7 @@ int main() {
     unsigned char *buf_win = malloc(win_w * win_h * SCREEN_B);
     sheet_setbuf(sht_win, buf_win, win_w, win_h, -1);
     draw_window(buf_win, win_w, win_h, "Terminal");
+    make_textbox(sht_win, 5, 25, win_w-10, win_h-30, RGB_000000);
     int win_x = 100, win_y = 100;
     sheet_slide(sht_win, win_x, win_y);
 

@@ -54,6 +54,10 @@ int main() {
     make_textbox(sht_win, 5, 25, win_w-10, win_h-30, RGB_000000);
     int win_x = 100, win_y = 100;
     sheet_slide(sht_win, win_x, win_y);
+    static int x = 5;
+    static int y = 24;
+    putchar_ascii(buf_win, win_w, x, y, RGB_FFFFFF, '#');
+    x += 8;
 
     sheet_updown(sht_back, 0);
     sheet_updown(sht_win, 1);
@@ -138,12 +142,22 @@ int main() {
         } else if (fd == kbd_fd) {
             size_t n = fread(keys, 1, 512, kbd);
             if (n > 0) {
-                static int x = 20;
-                static int y = 30;
                 for (int i=0; i<n; i++) {
-                    putchar_ascii(buf_win, win_w, x, y, RGB_000000, keys[i]);
-                    sheet_refresh(sht_win, x, y, x + 8, y + 20);
-                    x += 8;
+                    if (keys[i] == '\n') {
+                        y += 20;
+                        x = 5;
+                        putchar_ascii(buf_win, win_w, x, y, RGB_FFFFFF, '#');
+                        sheet_refresh(sht_win, x, y, x + 8, y + 20);
+                        x += 8;
+                    } else {
+                        putchar_ascii(buf_win, win_w, x, y, RGB_FFFFFF, keys[i]);
+                        sheet_refresh(sht_win, x, y, x + 8, y + 20);
+                        x += 8;
+                        if (x > win_w-12) {
+                            y += 20;
+                            x = 5;
+                        }
+                    }
                 }
             }
 

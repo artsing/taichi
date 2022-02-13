@@ -519,6 +519,8 @@ sys_select(void)
     if (res == 0) {
         proc->awoken_fd = -1;
         block();
+    } else {
+        proc->awoken_fd = res;
     }
 
     return proc->awoken_fd;

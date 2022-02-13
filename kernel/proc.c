@@ -401,7 +401,8 @@ void
 block(void)
 {
     acquire(&ptable.lock);
-    myproc()->state = BLOCKED;
+    struct proc* p = myproc();
+    p->state = BLOCKED;
     sched();
     release(&ptable.lock);
 }
@@ -414,9 +415,11 @@ unblock(int pid, int fd)
 
     acquire(&ptable.lock);
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-        if (p->pid == pid && p->state == BLOCKED) {
+        if (p->pid == pid) {
             p->awoken_fd = fd;
-            p->state = RUNNABLE;
+            if (p->state == BLOCKED) {
+                p->state = RUNNABLE;
+            }
         }
     }
     release(&ptable.lock);

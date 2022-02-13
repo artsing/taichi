@@ -56,7 +56,7 @@ int main() {
     sheet_slide(sht_win, win_x, win_y);
     static int x = 5;
     static int y = 24;
-    putchar_ascii(buf_win, win_w, x, y, RGB_FFFFFF, '#');
+    putchar_ascii(buf_win, win_w, x, y, RGB_FFFFFF, '>');
     x += 8;
 
     sheet_updown(sht_back, 0);
@@ -93,6 +93,7 @@ int main() {
         FD_SET(kbd_fd, &fds);
 
         int fd = select(max_fd + 1, &fds, NULL, NULL, NULL);
+        printf(1, "selectfd = %d\n", fd);
         if (fd == mouse_fd) {
             size_t n = fread(packets, sizeof(mouse_packet_t), 1024, mouse);
             if (n >0) {
@@ -146,7 +147,7 @@ int main() {
                     if (keys[i] == '\n') {
                         y += 20;
                         x = 5;
-                        putchar_ascii(buf_win, win_w, x, y, RGB_FFFFFF, '#');
+                        putchar_ascii(buf_win, win_w, x, y, RGB_FFFFFF, '>');
                         sheet_refresh(sht_win, x, y, x + 8, y + 20);
                         x += 8;
                     } else {

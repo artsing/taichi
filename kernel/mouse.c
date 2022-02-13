@@ -245,6 +245,7 @@ finish_packet:
             mouse_block_pid = -1;
             mouse_block_fd = -1;
         }
+
 read_next:
 		break;
 	}

@@ -93,7 +93,6 @@ int main() {
         FD_SET(kbd_fd, &fds);
 
         int fd = select(max_fd + 1, &fds, NULL, NULL, NULL);
-        printf(1, "selectfd = %d\n", fd);
         if (fd == mouse_fd) {
             size_t n = fread(packets, sizeof(mouse_packet_t), 1024, mouse);
             if (n >0) {
@@ -144,6 +143,9 @@ int main() {
             size_t n = fread(keys, 1, 512, kbd);
             if (n > 0) {
                 for (int i=0; i<n; i++) {
+                    if (y > win_h - 20) {
+                        y = 24;
+                    }
                     if (keys[i] == '\n') {
                         y += 20;
                         x = 5;

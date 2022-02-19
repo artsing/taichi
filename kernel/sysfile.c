@@ -525,3 +525,19 @@ sys_select(void)
 
     return proc->awoken_fd;
 }
+
+int sys_openpty(void)
+{
+    int *master;
+    int *slave;
+
+    if(argptr(0, (void*)&master, sizeof(*master)) < 0) {
+        return -1;
+    }
+
+    if(argptr(1, (void*)&slave, sizeof(*slave)) < 0) {
+        return -1;
+    }
+
+    return -1;
+}

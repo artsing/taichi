@@ -64,6 +64,14 @@ int main() {
     sheet_updown(sht_task, 2);
     sheet_updown(sht_mouse, 3);
 
+    int masterfd, slavefd;
+    int ret = openpty(&masterfd, &slavefd);
+    if (ret == 0) {
+        printf(1, "fdm = %d, fds = %d\n", masterfd, slavefd) ;
+    } else {
+        printf(2, "error: ret = %d\n", ret);
+    }
+
     FILE *mouse = fopen("/dev/mouse", "w");
     if (mouse == NULL) {
         printf(1, "open /dev/mouse failed\n");

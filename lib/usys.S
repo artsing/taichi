@@ -46,3 +46,6 @@ SYSCALL(seek)
 
 # select
 SYSCALL(select)
+
+# openpty
+SYSCALL(openpty)

@@ -23,7 +23,7 @@ exec(char *path, char **argv)
 
   if((ip = namei(path)) == 0){
     end_op();
-    cprintf("exec: fail\n");
+    cprintf("kernel exec: fail %s\n", path);
     return -1;
   }
   ilock(ip);

@@ -68,6 +68,14 @@ int main() {
     int ret = openpty(&masterfd, &slavefd);
     if (ret == 0) {
         printf(1, "fdm = %d, fds = %d\n", masterfd, slavefd) ;
+        write(masterfd, "hello\0", 6);
+        char buf[100];
+        int n = read(slavefd, buf, sizeof(buf));
+        printf(1, "read %d\n", n);
+
+        if (n > 0) {
+            printf(1, "%s\n", buf);
+        }
     } else {
         printf(2, "error: ret = %d\n", ret);
     }

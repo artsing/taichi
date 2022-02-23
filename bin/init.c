@@ -28,9 +28,11 @@ main(void)
     }
 
     if (open("/dev/kbd", O_RDWR) < 0) {
-        printf(1, "open kbd start\n");
         mknod("/dev/kbd", 4, 1);
-        printf(1, "open kbd end\n");
+    }
+
+    if (open("/dev/ptmx", O_RDWR) < 0) {
+        mknod("/dev/ptmx", 5, 1);
     }
 
     pid = fork();

@@ -446,6 +446,19 @@ stati(struct inode *ip, struct stat *st)
   st->size = ip->size;
 }
 
+// open inode
+int
+openi(struct inode *ip)
+{
+    if (ip->type == T_DEV) {
+        if(ip->major < 0 || ip->major >= NDEV || !devsw[ip->major].open) {
+            return -1;
+        }
+        return devsw[ip->major].open(ip);
+    }
+    return 0;
+}
+
 //PAGEBREAK!
 // Read data from inode.
 // Caller must hold ip->lock.

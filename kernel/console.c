@@ -271,6 +271,12 @@ consoleintr(int (*getc)(void))
 }
 
 int
+consoleopen(struct inode *ip)
+{
+    return 0;
+}
+
+int
 consoleread(struct inode *ip, char *dst, int n)
 {
   uint target;
@@ -333,6 +339,7 @@ consoleinit(void)
 {
   initlock(&cons.lock, "console");
 
+  devsw[CONSOLE].open = consoleopen;
   devsw[CONSOLE].write = consolewrite;
   devsw[CONSOLE].read = consoleread;
   devsw[CONSOLE].ioctl = consoleioctl;

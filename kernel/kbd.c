@@ -75,6 +75,12 @@ kbdgetc(void)
 }
 
 int
+dev_keyboard_open(struct inode* ip)
+{
+    return 0;
+}
+
+int
 dev_keyboard_read(struct inode *ip, char *dst, int n)
 {
     int res;
@@ -164,6 +170,7 @@ kbdintr(void)
 
 void
 kbdinit(void) {
+    devsw[KEYBOARD].open = dev_keyboard_open;
     devsw[KEYBOARD].write = dev_keyboard_write;
     devsw[KEYBOARD].read = dev_keyboard_read;
     devsw[KEYBOARD].ioctl = dev_keyboard_ioctl;

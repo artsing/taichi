@@ -74,6 +74,12 @@ static uint8_t mouse_read(void) {
 }
 
 int
+dev_mouse_open(struct inode *ip)
+{
+    return 0;
+}
+
+int
 dev_mouse_read(struct inode *ip, char *dst, int n)
 {
     int res;
@@ -310,6 +316,7 @@ void mouseinit(void) {
 	mouse_wait(1);
 	mouse_read();
 
+    devsw[MOUSE].open = dev_mouse_open;
     devsw[MOUSE].write = dev_mouse_write;
     devsw[MOUSE].read = dev_mouse_read;
     devsw[MOUSE].ioctl = dev_mouse_ioctl;

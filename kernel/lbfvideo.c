@@ -67,6 +67,12 @@ static void bochs_set_resolution(uint16_t x, uint16_t y) {
 }
 
 int
+lbf_video_open(struct inode *ip)
+{
+    return 0;
+}
+
+int
 lbf_video_read(struct inode *ip, char *dst, int n)
 {
     return 0;
@@ -126,6 +132,7 @@ lbf_video_init(struct pci_func *pcif)
     bochs_mmio_out(BOCHS_MMIO_ID, 0xB0C4);
     bochs_set_resolution(PREFERRED_W, PREFERRED_H);
 
+    devsw[LBF].open = lbf_video_open;
     devsw[LBF].write = lbf_video_write;
     devsw[LBF].read = lbf_video_read;
     devsw[LBF].ioctl = lbf_video_ioctl;

@@ -347,6 +347,13 @@ sys_open(void)
     f->readable = !(omode & O_WRONLY);
     f->writable = (omode & O_WRONLY) || (omode & O_RDWR);
 
+    int r = fileopen(f);
+    if (r < 0) {
+        myproc()->ofile[fd] = 0;
+        fileclose(f);
+        return r;
+    }
+
     return fd;
 }
 

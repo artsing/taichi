@@ -1,5 +1,10 @@
 #include "pty.h"
 
+int pty_open(struct inode *ip)
+{
+    return 0;
+}
+
 int pty_read(struct inode *ip, char *dst, int n)
 {
     return -1;
@@ -27,6 +32,7 @@ int pty_slelect_block(struct inode* ip)
 
 void pty_init(void)
 {
+    devsw[PTY].open = pty_open;
     devsw[PTY].write = pty_write;
     devsw[PTY].read = pty_read;
     devsw[PTY].ioctl = pty_ioctl;

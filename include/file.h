@@ -29,6 +29,7 @@ struct inode {
 // table mapping major device number to
 // device functions
 struct devsw {
+    int (*open)(struct inode*);
     int (*read)(struct inode*, char*, int);
     int (*write)(struct inode*, char*, int);
     int (*ioctl)(struct inode*, int request, void* argp);

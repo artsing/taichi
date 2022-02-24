@@ -95,6 +95,20 @@ filestat(struct file *f, struct stat *st)
   return -1;
 }
 
+// open file f
+int
+fileopen(struct file *f)
+{
+    int r;
+    if (f->type == FD_INODE) {
+        ilock(f->ip);
+        r = openi(f->ip);
+        iunlock(f->ip);
+        return r;
+    }
+    return 1;
+}
+
 // Read from file f.
 int
 fileread(struct file *f, char *addr, int n)

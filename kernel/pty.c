@@ -1,4 +1,5 @@
 #include "pty.h"
+#include "param.h"
 
 int pty_open(struct inode *ip)
 {

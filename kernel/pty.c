@@ -1,6 +1,8 @@
 #include "pty.h"
 #include "param.h"
 
+ptmx ptms;
+
 int pty_open(struct inode *ip)
 {
     return 0;

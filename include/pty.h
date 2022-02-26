@@ -2,9 +2,8 @@
 #define _PTY_H_
 
 typedef struct pty_s {
-    struct pipe *p0;
-    struct pipe *p1;
-} pty_t;
+    unsigned char bitmap;
+} ptmx;
 
 typedef struct master_pty_s {
     int index;

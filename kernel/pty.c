@@ -1,10 +1,32 @@
 #include "pty.h"
 #include "param.h"
 
-ptmx ptms;
+// free index
+static unsigned int index_bitmap = 0;
+
+int alloc_index()
+{
+    for (int i = 0; i < PTY_SIZE; i++) {
+        if (!(index_bitmap & (1 << i))) {
+            index_bitmap &= (1 << i);
+            return i;
+        }
+    }
+    return -1;
+}
+
+int free_index(int index)
+{
+    if (index >= 0 && index < PTY_SIZE) {
+        index_bitmap &= ~(1 << i);
+        return 1;
+    }
+    return 0;
+}
 
 int pty_open(struct inode *ip)
 {
+    int index = alloc_index();
     return 0;
 }
 

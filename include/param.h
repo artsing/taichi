@@ -14,5 +14,5 @@
 #define FSSIZE       2000  // size of file system in blocks
 #define MOUSE_PACKTES 1024 // size of packets of mouse
 #define KBD_KEYS      512  // size of keys of keyboard
-#define PTY_SIZE      10   // size of pty
+#define PTY_SIZE      32   // size of pty
 

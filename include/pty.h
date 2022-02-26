@@ -1,10 +1,6 @@
 #ifndef _PTY_H_
 #define _PTY_H_
 
-typedef struct pty_s {
-    unsigned char bitmap;
-} ptmx;
-
 typedef struct master_pty_s {
     int index;
     char ptsname[20];

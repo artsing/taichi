@@ -27,6 +27,18 @@ int free_index(int index)
 int pty_open(struct inode *ip)
 {
     int index = alloc_index();
+    struct inode *inode;
+    int major = 201;
+    int minor = 1;
+
+    begin_op();
+    if(inode = create("/dev/pts/0", T_DEV, major, minor) == 0){
+        end_op();
+        return -1;
+    }
+    iunlockput(inode);
+    end_op();
+
     return 0;
 }
 

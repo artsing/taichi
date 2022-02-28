@@ -173,6 +173,7 @@ void            syscall(void);
 // sysfile.c
 int             argfd(int, int*, struct file**);
 int             fdalloc(struct file*);
+struct inode*   create(char*, short, short, short);
 
 // timer.c
 void            timerinit(void);

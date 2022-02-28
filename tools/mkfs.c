@@ -69,7 +69,7 @@ int
 main(int argc, char *argv[])
 {
     int i, cc, fd;
-    uint rootino, inum, bin_ino, ino, off;
+    uint rootino, inum, bin_ino, dev_ino, ino, off;
     uint share_ino, active_ino, inactive_ino, fonts_ino;
     uint cursor_ino, etc_ino, icons_ino;
     struct dirent de;
@@ -142,7 +142,8 @@ main(int argc, char *argv[])
     cursor_ino = mkdir(share_ino, "cursor");
     icons_ino = mkdir(share_ino, "icons");
 
-    mkdir(rootino, "dev");
+    dev_ino = mkdir(rootino, "dev");
+    mkdir(dev_ino, "pts");
     etc_ino = mkdir(rootino, "etc");
     mkdir(rootino, "var");
 

@@ -334,7 +334,7 @@ ip_addr_pton (const char *p, ip_addr_t *n) {
 
 int openpty(int *master, int *slave)
 {
-    int masterfd = open("/dev/ptmx", O_RDWR);
+    int masterfd = open("/dev/ptmx", O_RDWR | O_NOCTTY);
     printf(1, "openpty... %d\n", masterfd);
     return -1;
 }

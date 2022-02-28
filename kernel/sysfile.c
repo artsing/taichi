@@ -253,7 +253,7 @@ sys_unlink(void)
     return -1;
 }
 
-static struct inode*
+struct inode*
 create(char *path, short type, short major, short minor)
 {
     struct inode *ip, *dp;
@@ -347,11 +347,13 @@ sys_open(void)
     f->readable = !(omode & O_WRONLY);
     f->writable = (omode & O_WRONLY) || (omode & O_RDWR);
 
-    int r = fileopen(f);
-    if (r < 0) {
-        myproc()->ofile[fd] = 0;
-        fileclose(f);
-        return r;
+    if (omode & O_NOCTTY) {
+        int r = fileopen(f);
+        if (r < 0) {
+            myproc()->ofile[fd] = 0;
+            fileclose(f);
+            return r;
+        }
     }
 
     return fd;

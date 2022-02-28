@@ -6,6 +6,7 @@
 #include "sleeplock.h"
 #include "fs.h"
 #include "file.h"
+#include "stat.h"
 
 // free index
 static unsigned int index_bitmap = 0;
@@ -33,19 +34,18 @@ int free_index(int index)
 int pty_open(struct inode *ip)
 {
     int index = alloc_index();
-    struct inode *inode;
+    struct inode *inodeptr;
     int major = 201;
     int minor = 1;
 
     begin_op();
-    /*
-    if(inode = create("/dev/pts/0", T_DEV, major, minor) == 0){
+    if((inodeptr = create("/dev/pts/0", T_DEV, major, minor)) == 0){
         cprintf("create /dev/pts/0 faild\n");
         end_op();
         return -1;
     }
-    iunlockput(inode);
-    */
+    iunlockput(inodeptr);
+
     end_op();
 
     return 0;

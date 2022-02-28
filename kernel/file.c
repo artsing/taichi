@@ -86,13 +86,13 @@ fileclose(struct file *f)
 int
 filestat(struct file *f, struct stat *st)
 {
-  if(f->type == FD_INODE){
-    ilock(f->ip);
-    stati(f->ip, st);
-    iunlock(f->ip);
-    return 0;
-  }
-  return -1;
+    if(f->type == FD_INODE){
+        ilock(f->ip);
+        stati(f->ip, st);
+        iunlock(f->ip);
+        return 0;
+    }
+    return -1;
 }
 
 // open file f

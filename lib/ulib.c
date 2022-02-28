@@ -331,3 +331,10 @@ ip_addr_pton (const char *p, ip_addr_t *n) {
     }
     return 0;
 }
+
+int openpty(int *master, int *slave)
+{
+    int masterfd = open("/dev/ptmx", O_RDWR);
+
+    return -1;
+}

@@ -75,6 +75,7 @@ uint32_t hton32(uint32_t h);
 uint32_t ntoh32(uint32_t n);
 long strtol(const char *s, char **endptr, int base);
 int ip_addr_pton(const char *p, ip_addr_t *n);
+int openpty(int *master, int *slave);
 
 #define IP_ADDR_LEN 4
 #define IP_ADDR_STR_LEN 16 /* "ddd.ddd.ddd.ddd\0" */

@@ -32,7 +32,8 @@ main(void)
     }
 
     if (open("/dev/ptmx", O_RDWR) < 0) {
-        mknod("/dev/ptmx", 5, 1);
+        int r = mknod("/dev/ptmx", 5, 1);
+        printf(1, "mknod /dev/ptmx r = %d\n", r);
     }
 
     pid = fork();

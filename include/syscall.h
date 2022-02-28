@@ -34,4 +34,3 @@
 
 #define SYS_seek     32
 #define SYS_select   33
-#define SYS_openpty  34

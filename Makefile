@@ -77,6 +77,7 @@ NET_OBJS = \
 
 VIDEO_OBJS = \
 	$(BUILD_KERNEL)/lbfvideo.o\
+	$(BUILD_KERNEL)/pty.o\
 
 OBJS += $(NET_OBJS)
 

@@ -1,5 +1,11 @@
+#include "types.h"
+#include "defs.h"
 #include "pty.h"
 #include "param.h"
+#include "spinlock.h"
+#include "sleeplock.h"
+#include "fs.h"
+#include "file.h"
 
 // free index
 static unsigned int index_bitmap = 0;
@@ -18,7 +24,7 @@ int alloc_index()
 int free_index(int index)
 {
     if (index >= 0 && index < PTY_SIZE) {
-        index_bitmap &= ~(1 << i);
+        index_bitmap &= ~(1 << index);
         return 1;
     }
     return 0;
@@ -32,11 +38,14 @@ int pty_open(struct inode *ip)
     int minor = 1;
 
     begin_op();
+    /*
     if(inode = create("/dev/pts/0", T_DEV, major, minor) == 0){
+        cprintf("create /dev/pts/0 faild\n");
         end_op();
         return -1;
     }
     iunlockput(inode);
+    */
     end_op();
 
     return 0;
@@ -62,7 +71,7 @@ int pty_slelect_check(struct inode* ip)
     return -1;
 }
 
-int pty_slelect_block(struct inode* ip)
+int pty_slelect_block(struct inode* ip, int pid, int fd)
 {
     return -1;
 }

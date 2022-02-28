@@ -26,6 +26,7 @@ main(void)
   ioapicinit();    // another interrupt controller
   consoleinit();   // console hardware
   uartinit();      // serial port
+  pty_init();      // pty init
   mouseinit();     // mouse init
   kbdinit();       // keyboard init
   pinit();         // process table

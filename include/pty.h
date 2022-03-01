@@ -6,15 +6,17 @@ typedef struct slave_pty_s slave_pty;
 
 struct master_pty_s {
     int index;
-    char ptsname[20];
-    slave_pty *pts;
+    slave_pty *slave;
 };
 
 struct slave_pty_s {
-    master_pty *ptm;
+    master_pty *master;
 };
 
 void master_pty_init();
 void slave_pty_init();
+
+master_pty* alloc_master_pty();
+void free_master_pty(master_pty*);
 
 #endif // _PTY_H_

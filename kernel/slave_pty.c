@@ -8,22 +8,23 @@
 #include "file.h"
 #include "stat.h"
 
-int slave_pty_open(struct inode*) {
+
+int slave_pty_open(struct inode* ip) {
     return -1;
 }
-int slave_pty_read(struct inode*, char*, int) {
+int slave_pty_read(struct inode* ip, char* buf, int n) {
     return -1;
 }
-int slave_pty_write(struct inode*, char*, int) {
+int slave_pty_write(struct inode* ip, char* buf, int n) {
     return -1;
 }
-int slave_pty_ioctl(struct inode*, int request, void* argp) {
+int slave_pty_ioctl(struct inode* ip, int request, void* argp) {
     return -1;
 }
-int slave_pty_select_check(struct inode*) {
+int slave_pty_select_check(struct inode* ip) {
     return -1;
 }
-int slave_pty_select_block(struct inode*, int pid, int fd) {
+int slave_pty_select_block(struct inode* ip, int pid, int fd) {
     return -1;
 }
 

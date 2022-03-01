@@ -8,29 +8,6 @@
 #include "file.h"
 #include "stat.h"
 
-// free index
-static unsigned int index_bitmap = 0;
-
-int alloc_index()
-{
-    for (int i = 0; i < PTY_SIZE; i++) {
-        if (!(index_bitmap & (1 << i))) {
-            index_bitmap &= (1 << i);
-            return i;
-        }
-    }
-    return -1;
-}
-
-int free_index(int index)
-{
-    if (index >= 0 && index < PTY_SIZE) {
-        index_bitmap &= ~(1 << index);
-        return 1;
-    }
-    return 0;
-}
-
 int pty_open(struct inode *ip)
 {
     struct inode *inodeptr;
@@ -38,21 +15,23 @@ int pty_open(struct inode *ip)
     int minor = 1;
     char buf[32];
 
-    int index = alloc_index();
+    master_pty* m = alloc_master_pty();
+    if (m == NULL) {
+        cprintf("alloc master pty failed.\n");
+        return -1;
+    }
+
+    int index = m->index;
     snprintf(buf, sizeof(buf), "/dev/pts/%d", index);
     ip->major = 200;
     ip->minor = index;
 
     begin_op();
-    if((inodeptr = create(buf, T_DEV, major, minor)) == 0){
-        cprintf("create %s faild\n", buf);
-        end_op();
-        return -1;
+    if((inodeptr = create(buf, T_DEV, major, minor)) != 0){
+        iunlockput(inodeptr);
     }
-    iunlockput(inodeptr);
 
     end_op();
-
     return 0;
 }
 
@@ -89,4 +68,7 @@ void pty_init(void)
     devsw[PTY].ioctl = pty_ioctl;
     devsw[PTY].select_check = pty_slelect_check;
     devsw[PTY].select_block = pty_slelect_block;
+
+    master_pty_init();
+    slave_pty_init();
 }

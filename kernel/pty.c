@@ -33,14 +33,19 @@ int free_index(int index)
 
 int pty_open(struct inode *ip)
 {
-    int index = alloc_index();
     struct inode *inodeptr;
     int major = 201;
     int minor = 1;
+    char buf[32];
+
+    int index = alloc_index();
+    snprintf(buf, sizeof(buf), "/dev/pts/%d", index);
+    ip->major = 200;
+    ip->minor = index;
 
     begin_op();
-    if((inodeptr = create("/dev/pts/0", T_DEV, major, minor)) == 0){
-        cprintf("create /dev/pts/0 faild\n");
+    if((inodeptr = create(buf, T_DEV, major, minor)) == 0){
+        cprintf("create %s faild\n", buf);
         end_op();
         return -1;
     }

@@ -14,5 +14,7 @@ struct slave_pty_s {
     master_pty *ptm;
 };
 
+void master_pty_init();
+void slave_pty_init();
 
 #endif // _PTY_H_

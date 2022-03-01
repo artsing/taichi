@@ -24,8 +24,6 @@ struct inode {
     short nlink;
     uint size;
     uint addrs[NDIRECT+1];
-
-    void *private;      // private data
 };
 
 // table mapping major device number to
@@ -46,6 +44,8 @@ extern struct devsw devsw[];
 #define MOUSE    3
 #define KEYBOARD 4
 #define PTY      5
+#define MASTER_PTY 200
+#define SLAVE_PTY  201
 
 #define F_SEEK_SET 0
 #define F_SEEK_CUR 1

@@ -23,7 +23,7 @@ void            consoleintr(int(*)(void));
 void            panic(char*) __attribute__((noreturn));
 
 // pty.c
-void pty_init(void);
+void            pty_init(void);
 
 // exec.c
 int             exec(char*, char**);

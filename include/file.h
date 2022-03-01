@@ -35,6 +35,7 @@ struct devsw {
     int (*ioctl)(struct inode*, int request, void* argp);
     int (*select_check)(struct inode*);
     int (*select_block)(struct inode*, int pid, int fd);
+    int (*ptsname)(struct inode*, char* buf, int n);
 };
 
 extern struct devsw devsw[];

@@ -336,5 +336,9 @@ int openpty(int *master, int *slave)
 {
     int masterfd = open("/dev/ptmx", O_RDWR | O_NOCTTY);
     printf(1, "openpty... %d\n", masterfd);
+
+    char buf[32];
+    int r = ptsname(masterfd, sizeof(buf), buf);
+    printf(1, "slave name = %s, r = %d.\n", &buf, r);
     return -1;
 }

@@ -11,8 +11,6 @@
 int pty_open(struct inode *ip)
 {
     struct inode *inodeptr;
-    int major = 201;
-    int minor = 1;
     char buf[32];
 
     master_pty* m = alloc_master_pty();
@@ -27,7 +25,7 @@ int pty_open(struct inode *ip)
     ip->minor = index;
 
     begin_op();
-    if((inodeptr = create(buf, T_DEV, major, minor)) != 0){
+    if((inodeptr = create(buf, T_DEV, 201, index)) != 0){
         iunlockput(inodeptr);
     }
 

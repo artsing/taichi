@@ -44,7 +44,7 @@ int sendto(int, char*, int, struct sockaddr*, int);
 
 int seek(int, int, int);
 int select(int nfd, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout_tv);
-int openpty(int *masterfd, int *slavefd);
+int ptsname(int fd, int n, char* buf);
 
 #endif /*_SYSCALL_*/
 

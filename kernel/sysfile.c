@@ -534,3 +534,27 @@ sys_select(void)
 
     return proc->awoken_fd;
 }
+
+int sys_ptsname(void) {
+    struct file *f;
+    int n;
+    char *p;
+
+    if (argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argptr(1, &p, n) < 0)
+        return -1;
+    if (f->type != FD_INODE || f->ip == NULL)
+        return -1;
+
+    struct inode *ip = f->ip;
+
+    if(ip->type == T_DEV){
+		if(ip->major != MASTER_PTY || ip->minor < 0  || ip->minor >= PTY_SIZE) {
+            return -1;
+		} else {
+            snprintf(p, n, "/dev/pts/%d", ip->minor);
+            cprintf(">>>>>>>>>>>>%s\n", p);
+		}
+	}
+
+    return 0;
+}

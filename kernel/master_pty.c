@@ -73,6 +73,11 @@ int master_pty_select_block(struct inode* ip, int pid, int fd) {
     return -1;
 }
 
+int master_pty_ptsname(struct inode* ip, char* buf, int n) {
+    return -1;
+}
+
+
 void master_pty_init() {
     initlock(&pty_table.lock, "pty_table");
 
@@ -82,4 +87,5 @@ void master_pty_init() {
     devsw[MASTER_PTY].ioctl = master_pty_ioctl;
     devsw[MASTER_PTY].select_check = master_pty_select_check;
     devsw[MASTER_PTY].select_block = master_pty_select_block;
+    devsw[MASTER_PTY].ptsname = master_pty_ptsname;
 }

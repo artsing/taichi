@@ -552,7 +552,6 @@ int sys_ptsname(void) {
             return -1;
 		} else {
             snprintf(p, n, "/dev/pts/%d", ip->minor);
-            cprintf(">>>>>>>>>>>>%s\n", p);
 		}
 	}
 

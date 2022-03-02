@@ -87,9 +87,7 @@ int master_pty_write(struct inode* ip, char* buf, int n) {
         return -1;
     }
 
-    int ret = ring_buffer_write(&m->out, buf, n);
-    cprintf("masterfd write ret=%d\n", ret);
-    return ret;
+    return ring_buffer_write(&m->out, buf, n);
 }
 
 int master_pty_ioctl(struct inode* ip, int request, void* argp) {

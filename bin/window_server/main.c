@@ -90,9 +90,11 @@ int main() {
             break;
         default:
             write(masterfd, ls, strlen(ls));
+            write(1, ls, strlen(ls));
+
             sleep(5);
 
-            for (;;) {
+            for (int i = 0; i < 100; i++) {
                 sleep(5);
                 n = read(masterfd, buf, sizeof(buf));
                 if (n > 0) {

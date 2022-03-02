@@ -11,8 +11,11 @@ static int ring_buffer_write1(ring_buffer *rb, char c) {
     if (((rb->pos + 1) % RING_BUF_SIZE) != rb->read_pos) {
         rb->data[rb->pos] = c;
         rb->pos = (rb->pos + 1) % RING_BUF_SIZE;
+
+    //cprintf("----------write1 pos:%d, char:%c ret=1\n", rb->pos, c);
         return 1;
     }
+    //cprintf("write1 ret = %d\n", 1);
     return 0;
 }
 
@@ -47,18 +50,19 @@ int ring_buffer_write(ring_buffer *rb, char *data, int n) {
     for (int i = 0; i < n; i++) {
         if (ring_buffer_write1(rb, data[i]) == 0) {
             ret = i;
-            break;
+            goto out;
         }
     }
+    ret = n;
 
+out:
     if (rb->locking) {
         release(&rb->lock);
     }
-
     return ret;
 }
 
-int read_ring_buffer(ring_buffer *rb, char *dst, int n) {
+int ring_buffer_read(ring_buffer *rb, char *dst, int n) {
     int res;
     if (rb->locking) {
         acquire(&rb->lock);
@@ -86,6 +90,7 @@ ret:
     if (rb->locking) {
         release(&rb->lock);
     }
+    //cprintf(">>>>>>>>>read=%d; pos=%d, read_pos=%d<<<<<<\n", res, rb->pos, rb->read_pos);
     return res;
 }
 

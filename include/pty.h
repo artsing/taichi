@@ -7,6 +7,9 @@ typedef struct slave_pty_s slave_pty;
 struct master_pty_s {
     int index;
     slave_pty *slave;
+
+    ring_buffer in;
+    ring_buffer out;
 };
 
 struct slave_pty_s {
@@ -18,5 +21,7 @@ void slave_pty_init();
 
 master_pty* alloc_master_pty();
 void free_master_pty(master_pty*);
+
+master_pty* lookup_master_pty(int index);
 
 #endif // _PTY_H_

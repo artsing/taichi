@@ -1,12 +1,14 @@
 #include "types.h"
 #include "defs.h"
-#include "pty.h"
 #include "param.h"
 #include "spinlock.h"
 #include "sleeplock.h"
 #include "fs.h"
 #include "file.h"
 #include "stat.h"
+
+#include "ring_buffer.h"
+#include "pty.h"
 
 struct {
     struct spinlock lock;
@@ -24,6 +26,8 @@ master_pty* alloc_master_pty() {
             m->index = i + 1;
             m->slave = &(pty_table.slave[i]);
             m->slave->master = m;
+            ring_buffer_init(&m->in, "ptm_in");
+            ring_buffer_init(&m->out, "ptm_out");
             release(&pty_table.lock);
             return m;
         }
@@ -49,17 +53,43 @@ void free_master_pty(master_pty *m_pty) {
     }
 }
 
+master_pty* lookup_master_pty(int index) {
+    master_pty *m = NULL;
+    if (index > 0 && index <= PTY_SIZE) {
+        acquire(&pty_table.lock);
+
+        m = &(pty_table.master[index-1]);
+        if (m->index != index) {
+            m = NULL;
+        }
+
+        release(&pty_table.lock);
+    }
+    return m;
+}
+
 int master_pty_open(struct inode* ip) {
     return -1;
 }
 
 int master_pty_read(struct inode* ip, char* buf, int n) {
-    cprintf("master pty read index = %d", ip->minor);
-    return -1;
+    master_pty* m = lookup_master_pty(ip->minor);
+    if (m == NULL) {
+        return -1;
+    }
+
+    return ring_buffer_read(&m->in, buf, n);
 }
 
 int master_pty_write(struct inode* ip, char* buf, int n) {
-    return -1;
+    master_pty* m = lookup_master_pty(ip->minor);
+    if (m == NULL) {
+        return -1;
+    }
+
+    int ret = ring_buffer_write(&m->out, buf, n);
+    cprintf("masterfd write ret=%d\n", ret);
+    return ret;
 }
 
 int master_pty_ioctl(struct inode* ip, int request, void* argp) {

@@ -72,41 +72,32 @@ int main() {
         char buf[100];
         char *argv[] = { "sh", 0 };
 
+        char *ls = "ls\r\n";
+
         switch(fork()) {
         case -1:
             break;
         case 0:
-            n = read(slavefd, buf, sizeof(buf));
-            printf(1, "child read %d\n", n);
-            if (n > 0) {
-                printf(1, "%s\n", buf);
-            }
-
             close(0);
             dup(slavefd);
             close(1);
             dup(slavefd);
-            //close(2);
-            //dup(slavefd);
+            close(2);
+            dup(slavefd);
 
             exec("/bin/sh", argv);
             exit();
             break;
         default:
-            write(masterfd, "hello\0", 6);
+            write(masterfd, ls, strlen(ls));
             sleep(5);
-            write(masterfd, "ls\r\n\0", 5);
-            sleep(5);
-            n = read(masterfd, buf, sizeof(buf));
-            if (n > 0) {
-                printf(2, "<artsing>");
-                write(2, buf, n);
-            }
-            sleep(5);
-            n = read(masterfd, buf, sizeof(buf));
-            if (n > 0) {
-                printf(2, "<artsing>");
-                write(2, buf, n);
+
+            for (;;) {
+                sleep(5);
+                n = read(masterfd, buf, sizeof(buf));
+                if (n > 0) {
+                    write(1, buf, n);
+                }
             }
 
             break;

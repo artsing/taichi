@@ -1,12 +1,14 @@
 #include "types.h"
 #include "defs.h"
-#include "pty.h"
 #include "param.h"
 #include "spinlock.h"
 #include "sleeplock.h"
 #include "fs.h"
 #include "file.h"
 #include "stat.h"
+
+#include "ring_buffer.h"
+#include "pty.h"
 
 int pty_open(struct inode *ip)
 {

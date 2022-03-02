@@ -1,6 +1,5 @@
 #include "types.h"
 #include "defs.h"
-#include "pty.h"
 #include "param.h"
 #include "spinlock.h"
 #include "sleeplock.h"
@@ -8,23 +7,39 @@
 #include "file.h"
 #include "stat.h"
 
+#include "ring_buffer.h"
+#include "pty.h"
 
 int slave_pty_open(struct inode* ip) {
     return -1;
 }
+
 int slave_pty_read(struct inode* ip, char* buf, int n) {
-    cprintf("slave pty read index = %d", ip->minor);
-    return -1;
+    master_pty* m = lookup_master_pty(ip->minor);
+    if (m == NULL) {
+        return -1;
+    }
+
+    return ring_buffer_read(&m->out, buf, n);
 }
+
 int slave_pty_write(struct inode* ip, char* buf, int n) {
-    return -1;
+    master_pty* m = lookup_master_pty(ip->minor);
+    if (m == NULL) {
+        return -1;
+    }
+
+    return ring_buffer_write(&m->in, buf, n);
 }
+
 int slave_pty_ioctl(struct inode* ip, int request, void* argp) {
     return -1;
 }
+
 int slave_pty_select_check(struct inode* ip) {
     return -1;
 }
+
 int slave_pty_select_block(struct inode* ip, int pid, int fd) {
     return -1;
 }

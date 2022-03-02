@@ -90,7 +90,6 @@ int main() {
             break;
         default:
             write(masterfd, ls, strlen(ls));
-            write(1, ls, strlen(ls));
 
             sleep(5);
 

@@ -50,6 +50,7 @@ OBJS = \
 	$(BUILD_KERNEL)/sleeplock.o\
 	$(BUILD_KERNEL)/spinlock.o\
 	$(BUILD_KERNEL)/string.o\
+	$(BUILD_KERNEL)/ring_buffer.o\
 	$(BUILD_KERNEL)/swtch.o\
 	$(BUILD_KERNEL)/syscall.o\
 	$(BUILD_KERNEL)/sysfile.o\

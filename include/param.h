@@ -16,3 +16,4 @@
 #define KBD_KEYS      512  // size of keys of keyboard
 #define PTY_SIZE      32   // size of pty
 
+#define RING_BUF_SIZE 1024  // ring buffer size

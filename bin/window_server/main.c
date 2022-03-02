@@ -66,7 +66,7 @@ int main() {
 
     int masterfd, slavefd;
     int ret = openpty(&masterfd, &slavefd);
-    if (ret == 0) {
+    if (ret >= 0) {
         printf(1, "fdm = %d, fds = %d\n", masterfd, slavefd) ;
         int n;
         char buf[100];

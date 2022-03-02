@@ -21,11 +21,11 @@ int pty_open(struct inode *ip)
 
     int index = m->index;
     snprintf(buf, sizeof(buf), "/dev/pts/%d", index);
-    ip->major = 200;
+    ip->major = MASTER_PTY;
     ip->minor = index;
 
     begin_op();
-    if((inodeptr = create(buf, T_DEV, 201, index)) != 0){
+    if((inodeptr = create(buf, T_DEV, SLAVE_PTY, index)) != 0){
         iunlockput(inodeptr);
     }
 

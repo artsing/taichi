@@ -13,6 +13,7 @@ int slave_pty_open(struct inode* ip) {
     return -1;
 }
 int slave_pty_read(struct inode* ip, char* buf, int n) {
+    cprintf("slave pty read index = %d", ip->minor);
     return -1;
 }
 int slave_pty_write(struct inode* ip, char* buf, int n) {

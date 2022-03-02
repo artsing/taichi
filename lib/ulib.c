@@ -339,6 +339,16 @@ int openpty(int *master, int *slave)
 
     char buf[32];
     int r = ptsname(masterfd, buf, sizeof(buf));
-    printf(1, "slave name = %s, r = %d.\n", buf, r);
-    return -1;
+    if (r < 0) {
+        return -1;
+    }
+
+    int slavefd = open(buf, O_RDWR);
+    if (slavefd < 0) {
+        return -1;
+    }
+
+    *master = masterfd;
+    *slave = slavefd;
+    return 0;
 }

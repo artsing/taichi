@@ -54,6 +54,7 @@ int master_pty_open(struct inode* ip) {
 }
 
 int master_pty_read(struct inode* ip, char* buf, int n) {
+    cprintf("master pty read index = %d", ip->minor);
     return -1;
 }
 

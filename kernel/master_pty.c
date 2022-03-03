@@ -77,7 +77,7 @@ int master_pty_read(struct inode* ip, char* buf, int n) {
     if (m == NULL) {
         return -1;
     }
-    cprintf("[PTY][master_pty_read] ip->major = %d\n", ip->major);
+    //cprintf("[PTY][master_pty_read] ip->major = %d\n", ip->major);
     return ring_buffer_read(&m->in, buf, n);
 }
 
@@ -86,7 +86,7 @@ int master_pty_write(struct inode* ip, char* buf, int n) {
     if (m == NULL) {
         return -1;
     }
-    cprintf("[PTY][master_pty_write] ip->major = %d\n", ip->major);
+    //cprintf("[PTY][master_pty_write] ip->major = %d\n", ip->major);
     return ring_buffer_write(&m->out, buf, n);
 }
 

@@ -99,7 +99,7 @@ strchr(const char *s, char c)
   return 0;
 }
 
-char* 
+char*
 strrchr(const char * s, char c) {
 	return memrchr(s, c, strlen(s) + 1);
 }

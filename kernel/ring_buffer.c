@@ -59,7 +59,7 @@ out:
     if (rb->locking) {
         release(&rb->lock);
     }
-    cprintf("<< << <<[ wirte=%d; pos=%d, read_pos=%d %s]\n", ret, rb->pos, rb->read_pos, rb->lock.name);
+    //cprintf("<< << <<[ wirte=%d; pos=%d, read_pos=%d %s]\n", ret, rb->pos, rb->read_pos, rb->lock.name);
     return ret;
 }
 
@@ -91,7 +91,7 @@ ret:
     if (rb->locking) {
         release(&rb->lock);
     }
-    cprintf(">> >> >> [ read=%d; pos=%d, read_pos=%d %s]\n", res, rb->pos, rb->read_pos, rb->lock.name);
+    //cprintf(">> >> >> [ read=%d; pos=%d, read_pos=%d %s]\n", res, rb->pos, rb->read_pos, rb->lock.name);
     return res;
 }
 

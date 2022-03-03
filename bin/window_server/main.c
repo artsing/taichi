@@ -66,13 +66,14 @@ int main() {
 
     int masterfd, slavefd;
     int ret = openpty(&masterfd, &slavefd);
+    char *ls = "ls\n";
+
     if (ret >= 0) {
         printf(1, "fdm = %d, fds = %d\n", masterfd, slavefd) ;
         int n;
         char buf[100];
         char *argv[] = { "sh", 0 };
 
-        char *ls = "ls\r\n";
 
         switch(fork()) {
         case -1:
@@ -86,20 +87,21 @@ int main() {
             dup(slavefd);
 
             exec("/bin/sh", argv);
+
             exit();
             break;
         default:
+            /*
             write(masterfd, ls, strlen(ls));
+            sleep(100);
 
-            sleep(5);
-
-            for (int i = 0; i < 100; i++) {
-                sleep(5);
-                n = read(masterfd, buf, sizeof(buf));
-                if (n > 0) {
-                    write(1, buf, n);
-                }
+            char buf[1024];
+            int n = read(masterfd, buf, 1024);
+            if (n > 0) {
+                buf[n] = 0;
+                write(1, buf, n);
             }
+            */
 
             break;
         }
@@ -183,13 +185,17 @@ int main() {
                 }
             }
         } else if (fd == kbd_fd) {
+            memset(keys, 0, 512);
             size_t n = fread(keys, 1, 512, kbd);
             if (n > 0) {
+                keys[n] = 0;
                 for (int i=0; i<n; i++) {
                     if (y > win_h - 20) {
                         y = 24;
                     }
-                    if (keys[i] == '\n') {
+                    if (keys[i] == '\n' || keys[i] == '\r') {
+                        write(masterfd, ls, strlen(ls));
+
                         y += 20;
                         x = 5;
                         putchar_ascii(buf_win, win_w, x, y, RGB_FFFFFF, '>');
@@ -208,6 +214,13 @@ int main() {
             }
 
         } else {
+        }
+
+        char buf[1024];
+        int n = read(masterfd, buf, 1024);
+        if (n > 0) {
+            buf[n] = 0;
+            write(1, buf, n);
         }
     } while (1);
 

@@ -19,7 +19,7 @@ int slave_pty_read(struct inode* ip, char* buf, int n) {
     if (m == NULL) {
         return -1;
     }
-
+    cprintf("[PTY][slave_pty_read] ip->major = %d\n", ip->major);
     return ring_buffer_read(&m->out, buf, n);
 }
 
@@ -28,7 +28,7 @@ int slave_pty_write(struct inode* ip, char* buf, int n) {
     if (m == NULL) {
         return -1;
     }
-
+    cprintf("[PTY][slave_pty_write] ip->major = %d\n", ip->major);
     return ring_buffer_write(&m->in, buf, n);
 }
 

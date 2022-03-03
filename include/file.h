@@ -45,8 +45,8 @@ extern struct devsw devsw[];
 #define MOUSE    3
 #define KEYBOARD 4
 #define PTY      5
-#define MASTER_PTY 6
-#define SLAVE_PTY  7
+#define MASTER_PTY 7
+#define SLAVE_PTY  8
 
 #define F_SEEK_SET 0
 #define F_SEEK_CUR 1

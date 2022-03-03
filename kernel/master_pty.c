@@ -26,8 +26,8 @@ master_pty* alloc_master_pty() {
             m->index = i + 1;
             m->slave = &(pty_table.slave[i]);
             m->slave->master = m;
-            ring_buffer_init(&m->in, "ptm_in");
-            ring_buffer_init(&m->out, "ptm_out");
+            ring_buffer_init(&m->in, "PTY_RB_IN");
+            ring_buffer_init(&m->out, "PTY_RB_OUT");
             release(&pty_table.lock);
             return m;
         }
@@ -77,7 +77,7 @@ int master_pty_read(struct inode* ip, char* buf, int n) {
     if (m == NULL) {
         return -1;
     }
-
+    cprintf("[PTY][master_pty_read] ip->major = %d\n", ip->major);
     return ring_buffer_read(&m->in, buf, n);
 }
 
@@ -86,7 +86,7 @@ int master_pty_write(struct inode* ip, char* buf, int n) {
     if (m == NULL) {
         return -1;
     }
-
+    cprintf("[PTY][master_pty_write] ip->major = %d\n", ip->major);
     return ring_buffer_write(&m->out, buf, n);
 }
 

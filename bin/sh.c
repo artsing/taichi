@@ -139,12 +139,10 @@ int
 getcmd(char *buf, int nbuf)
 {
     printf(2, "$ ");
-try:
     memset(buf, 0, nbuf);
     gets(buf, nbuf);
     if(buf[0] == 0) { // EOF
-        sleep(1);
-        goto try;
+        return -1;
     }
     return 0;
 }

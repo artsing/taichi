@@ -21,7 +21,14 @@ int slave_pty_read(struct inode* ip, char* buf, int n) {
     }
 
     //cprintf("[PTY][slave_pty_read] ip->major = %d\n", ip->major);
-    return ring_buffer_read(&m->out, buf, n);
+    int ret;
+retry:
+    ret = ring_buffer_read(&m->out, buf, n);
+    if (ret <= 0) {
+        yield();
+        goto retry;
+    }
+    return ret;
 }
 
 int slave_pty_write(struct inode* ip, char* buf, int n) {

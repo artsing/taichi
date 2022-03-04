@@ -24,16 +24,17 @@ int select_blocker_block(select_blocker *sb, int pid, int fd) {
         acquire(&sb->lock);
     }
 
+    int result = 0;
     if (sb->pid == -1 && sb->fd == -1) {
         sb->pid = pid;
         sb->fd = fd;
-        return 1;
+        result = 1;
     }
 
     if (sb->locking) {
         release(&sb->lock);
     }
-    return 0;
+    return result;
 }
 
 int select_blocker_unblock(select_blocker *sb) {
@@ -41,15 +42,16 @@ int select_blocker_unblock(select_blocker *sb) {
         acquire(&sb->lock);
     }
 
+    int result = 0;
     if (sb->pid != -1 && sb->fd != -1) {
         unblock(sb->pid, sb->fd);
         sb->pid = -1;
         sb->fd = -1;
-        return 1;
+        result = 1;
     }
 
     if (sb->locking) {
         release(&sb->lock);
     }
-    return 0;
+    return result;
 }

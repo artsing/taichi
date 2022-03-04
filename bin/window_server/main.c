@@ -126,6 +126,7 @@ int main() {
     int mouse_fd = fgetfd(mouse);
     int kbd_fd = fgetfd(kbd);
     int max_fd = mouse_fd > kbd_fd ? mouse_fd : kbd_fd;
+    max_fd = max_fd > masterfd ? max_fd : masterfd;
 
     char *keys = malloc(512);
     mouse_packet_t *packets = malloc(sizeof(mouse_packet_t) * 1024);
@@ -136,8 +137,10 @@ int main() {
         FD_ZERO(&fds);
         FD_SET(mouse_fd, &fds);
         FD_SET(kbd_fd, &fds);
+        FD_SET(masterfd, &fds);
 
         int fd = select(max_fd + 1, &fds, NULL, NULL, NULL);
+        printf(2, "select fd = %d\n", fd);
         if (fd == mouse_fd) {
             size_t n = fread(packets, sizeof(mouse_packet_t), 1024, mouse);
             if (n >0) {
@@ -212,15 +215,14 @@ int main() {
                     }
                 }
             }
-
+        } else if (fd == masterfd){
+            char buf[1024];
+            int n = read(masterfd, buf, 1024);
+            if (n > 0) {
+                buf[n] = 0;
+                write(1, buf, n);
+            }
         } else {
-        }
-
-        char buf[1024];
-        int n = read(masterfd, buf, 1024);
-        if (n > 0) {
-            buf[n] = 0;
-            write(1, buf, n);
         }
     } while (1);
 

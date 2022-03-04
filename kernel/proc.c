@@ -375,8 +375,9 @@ sched(void)
 
   if(!holding(&ptable.lock))
     panic("sched ptable.lock");
-  if(mycpu()->ncli != 1)
+  if(mycpu()->ncli != 1) {
     panic("sched locks");
+  }
   if(p->state == RUNNING)
     panic("sched running");
   if(readeflags()&FL_IF)
@@ -416,7 +417,7 @@ unblock(int pid, int fd)
     acquire(&ptable.lock);
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
         if (p->pid == pid) {
-            //p->awoken_fd = fd;
+            p->awoken_fd = fd;
             if (p->state == BLOCKED) {
                 p->state = RUNNABLE;
             }

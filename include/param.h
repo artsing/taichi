@@ -17,3 +17,4 @@
 #define PTY_SIZE      32   // size of pty
 
 #define RING_BUF_SIZE 2048  // ring buffer size
+#define BLOCKER_SIZE  16  // blocker size

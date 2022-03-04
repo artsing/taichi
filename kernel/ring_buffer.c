@@ -64,20 +64,20 @@ out:
 }
 
 int ring_buffer_read(ring_buffer *rb, char *dst, int n) {
-    int res;
+    int result = n;
     if (rb->locking) {
         acquire(&rb->lock);
     }
 
     if (rb->read_pos == rb->pos) {
-        res = 0;
+        result = 0;
         goto ret;
     }
 
     for (int i=0; i<n; i++) {
         // buffer is empty
         if (rb->read_pos == rb->pos) {
-            res = i;
+            result = i;
             goto ret;
         }
 
@@ -85,13 +85,30 @@ int ring_buffer_read(ring_buffer *rb, char *dst, int n) {
         rb->data[rb->read_pos] = 0;
         rb->read_pos = (rb->read_pos + 1) % RING_BUF_SIZE;
     }
-    res = n;
 
 ret:
     if (rb->locking) {
         release(&rb->lock);
     }
-    //cprintf(">> >> >> [ read=%d; pos=%d, read_pos=%d %s]\n", res, rb->pos, rb->read_pos, rb->lock.name);
-    return res;
+    //cprintf(">> >> >> [ read=%d; pos=%d, read_pos=%d %s]\n", result, rb->pos, rb->read_pos, rb->lock.name);
+    return result;
+}
+
+int ring_buffer_empty(ring_buffer *rb) {
+    int result;
+    if (rb->locking) {
+        acquire(&rb->lock);
+    }
+
+    if (rb->read_pos == rb->pos) {
+        result = 1;
+    } else {
+        result = 0;
+    }
+
+    if (rb->locking) {
+        release(&rb->lock);
+    }
+    return result;
 }
 

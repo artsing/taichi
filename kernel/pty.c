@@ -7,6 +7,7 @@
 #include "file.h"
 #include "stat.h"
 
+#include "blocker.h"
 #include "ring_buffer.h"
 #include "pty.h"
 

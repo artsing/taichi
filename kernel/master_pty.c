@@ -7,6 +7,7 @@
 #include "file.h"
 #include "stat.h"
 
+#include "blocker.h"
 #include "ring_buffer.h"
 #include "pty.h"
 
@@ -26,8 +27,11 @@ master_pty* alloc_master_pty() {
             m->index = i + 1;
             m->slave = &(pty_table.slave[i]);
             m->slave->master = m;
+
             ring_buffer_init(&m->in, "PTY_RB_IN");
             ring_buffer_init(&m->out, "PTY_RB_OUT");
+            select_blocker_init(&m->blocker, "PTY_BLOCKER");
+
             release(&pty_table.lock);
             return m;
         }
@@ -95,11 +99,25 @@ int master_pty_ioctl(struct inode* ip, int request, void* argp) {
 }
 
 int master_pty_select_check(struct inode* ip) {
-    return -1;
+    master_pty* m = lookup_master_pty(ip->minor);
+    if (m == NULL) {
+        return -1;
+    }
+
+    if (ring_buffer_empty(&m->in)) {
+        return 0;
+    } else {
+        return 1;
+    }
 }
 
 int master_pty_select_block(struct inode* ip, int pid, int fd) {
-    return -1;
+    master_pty* m = lookup_master_pty(ip->minor);
+    if (m == NULL) {
+        return -1;
+    }
+
+    return select_blocker_block(&m->blocker, pid, fd);
 }
 
 int master_pty_ptsname(struct inode* ip, char* buf, int n) {

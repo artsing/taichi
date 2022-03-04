@@ -16,5 +16,6 @@ void ring_buffer_init(ring_buffer *rb, char* lock);
 int ring_buffer_write_byte(ring_buffer *rb, char c);
 int ring_buffer_write(ring_buffer *rb, char *data, int n);
 int ring_buffer_read(ring_buffer *rb, char *dst, int n);
+int ring_buffer_empty(ring_buffer *rb);
 
 #endif //_RING_BUFFER_H_

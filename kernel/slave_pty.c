@@ -7,6 +7,7 @@
 #include "file.h"
 #include "stat.h"
 
+#include "blocker.h"
 #include "ring_buffer.h"
 #include "pty.h"
 
@@ -38,7 +39,11 @@ int slave_pty_write(struct inode* ip, char* buf, int n) {
     }
 
     //cprintf("[PTY][slave_pty_write] ip->major = %d\n", ip->major);
-    return ring_buffer_write(&m->in, buf, n);
+    int ret = ring_buffer_write(&m->in, buf, n);
+    if (ret > 0) {
+        select_blocker_unblock(&m->blocker);
+    }
+    return ret;
 }
 
 int slave_pty_ioctl(struct inode* ip, int request, void* argp) {

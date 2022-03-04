@@ -10,6 +10,8 @@ struct master_pty_s {
 
     ring_buffer in;
     ring_buffer out;
+
+    select_blocker blocker;
 };
 
 struct slave_pty_s {

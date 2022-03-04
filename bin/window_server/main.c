@@ -56,7 +56,7 @@ int main() {
     sheet_slide(sht_win, win_x, win_y);
     static int x = 5;
     static int y = 24;
-    putchar_ascii(buf_win, win_w, x, y, RGB_FFFFFF, '>');
+    //putchar_ascii(buf_win, win_w, x, y, RGB_FFFFFF, '>');
     x += 8;
 
     sheet_updown(sht_back, 0);
@@ -140,7 +140,7 @@ int main() {
         FD_SET(masterfd, &fds);
 
         int fd = select(max_fd + 1, &fds, NULL, NULL, NULL);
-        printf(2, "select fd = %d\n", fd);
+        //printf(2, "select fd = %d\n", fd);
         if (fd == mouse_fd) {
             size_t n = fread(packets, sizeof(mouse_packet_t), 1024, mouse);
             if (n >0) {
@@ -192,17 +192,15 @@ int main() {
             size_t n = fread(keys, 1, 512, kbd);
             if (n > 0) {
                 keys[n] = 0;
+                write(masterfd, keys, strlen(keys));
                 for (int i=0; i<n; i++) {
                     if (y > win_h - 20) {
                         y = 24;
                     }
                     if (keys[i] == '\n' || keys[i] == '\r') {
-                        write(masterfd, ls, strlen(ls));
 
                         y += 20;
                         x = 5;
-                        putchar_ascii(buf_win, win_w, x, y, RGB_FFFFFF, '>');
-                        sheet_refresh(sht_win, x, y, x + 8, y + 20);
                         x += 8;
                     } else {
                         putchar_ascii(buf_win, win_w, x, y, RGB_FFFFFF, keys[i]);
@@ -216,11 +214,30 @@ int main() {
                 }
             }
         } else if (fd == masterfd){
-            char buf[1024];
+            char buf[1024] = { 0 };
             int n = read(masterfd, buf, 1024);
             if (n > 0) {
                 buf[n] = 0;
-                write(1, buf, n);
+                //write(1, buf, n);
+
+                for (int i=0; i<n; i++) {
+                    if (y > win_h - 20) {
+                        y = 24;
+                    }
+                    if (buf[i] == '\n') {
+                        y += 20;
+                        x = 5;
+                        x += 8;
+                    } else {
+                        putchar_ascii(buf_win, win_w, x, y, RGB_FFFFFF, buf[i]);
+                        sheet_refresh(sht_win, x, y, x + 8, y + 20);
+                        x += 8;
+                        if (x > win_w-12) {
+                            y += 20;
+                            x = 5;
+                        }
+                    }
+                }
             }
         } else {
         }

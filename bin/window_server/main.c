@@ -52,12 +52,11 @@ int main() {
     sheet_setbuf(sht_win, buf_win, win_w, win_h, -1);
     draw_window(buf_win, win_w, win_h, "Terminal");
     make_textbox(sht_win, 5, 25, win_w-10, win_h-30, RGB_000000);
-    int win_x = 100, win_y = 100;
+    int win_x = screen->width/2 - win_w/2, win_y = screen->height/2 - win_h/2 - task_h;
     sheet_slide(sht_win, win_x, win_y);
     static int x = 5;
     static int y = 24;
     //putchar_ascii(buf_win, win_w, x, y, RGB_FFFFFF, '>');
-    x += 8;
 
     sheet_updown(sht_back, 0);
     sheet_updown(sht_win, 1);
@@ -223,15 +222,16 @@ int main() {
                 for (int i=0; i<n; i++) {
                     if (y > win_h - 20) {
                         y = 24;
+                        rectangle_fill(sht_win->buf, sht_win->bxsize, 4, 24, win_w, win_h, RGB_000000);
+                        sheet_refresh(sht_win, 0, 0, win_w, win_h);
                     }
                     if (buf[i] == '\n') {
                         y += 20;
                         x = 5;
-                        x += 8;
                     } else {
                         putchar_ascii(buf_win, win_w, x, y, RGB_FFFFFF, buf[i]);
                         sheet_refresh(sht_win, x, y, x + 8, y + 20);
-                        x += 8;
+                        x += 9;
                         if (x > win_w-12) {
                             y += 20;
                             x = 5;

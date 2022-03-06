@@ -200,7 +200,6 @@ int main() {
 
                         y += 20;
                         x = 5;
-                        x += 8;
                     } else {
                         putchar_ascii(buf_win, win_w, x, y, RGB_FFFFFF, keys[i]);
                         sheet_refresh(sht_win, x, y, x + 8, y + 20);
@@ -222,7 +221,7 @@ int main() {
                 for (int i=0; i<n; i++) {
                     if (y > win_h - 20) {
                         y = 24;
-                        rectangle_fill(sht_win->buf, sht_win->bxsize, 4, 24, win_w, win_h, RGB_000000);
+                        rectangle_fill(sht_win->buf, sht_win->bxsize, 4, 24, win_w-10, win_h-20, RGB_000000);
                         sheet_refresh(sht_win, 0, 0, win_w, win_h);
                     }
                     if (buf[i] == '\n') {

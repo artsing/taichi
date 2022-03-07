@@ -46,7 +46,7 @@ int main() {
     sheet_slide(sht_mouse, cursor_x, cursor_y);
 
     // window
-    int win_w = 400, win_h = 300;
+    int win_w = 800, win_h = 600;
     SHEET *sht_win = sheet_alloc(shtctl);
     unsigned char *buf_win = malloc(win_w * win_h * SCREEN_B);
     sheet_setbuf(sht_win, buf_win, win_w, win_h, -1);
@@ -219,9 +219,9 @@ int main() {
                 //write(1, buf, n);
 
                 for (int i=0; i<n; i++) {
-                    if (y > win_h - 20) {
+                    if (y > win_h - 10) {
                         y = 24;
-                        rectangle_fill(sht_win->buf, sht_win->bxsize, 4, 24, win_w-10, win_h-20, RGB_000000);
+                        rectangle_fill(sht_win->buf, sht_win->bxsize, 4, 24, win_w-10, win_h-10, RGB_000000);
                         sheet_refresh(sht_win, 0, 0, win_w, win_h);
                     }
                     if (buf[i] == '\n') {

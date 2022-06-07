@@ -128,7 +128,8 @@ int main() {
     max_fd = max_fd > masterfd ? max_fd : masterfd;
 
     char *keys = malloc(512);
-    mouse_packet_t *packets = malloc(sizeof(mouse_packet_t) * 1024);
+    int packet_size = 32;
+    mouse_packet_t *packets = malloc(sizeof(mouse_packet_t) * packet_size);
 
     fd_set fds;
     bool move_win = false;
@@ -141,7 +142,7 @@ int main() {
         int fd = select(max_fd + 1, &fds, NULL, NULL, NULL);
         //printf(2, "select fd = %d\n", fd);
         if (fd == mouse_fd) {
-            size_t n = fread(packets, sizeof(mouse_packet_t), 1024, mouse);
+            size_t n = fread(packets, sizeof(mouse_packet_t), packet_size, mouse);
             if (n >0) {
                 for (int i=0; i<n; i++) {
                     mouse_packet_t packet = packets[i];
@@ -160,9 +161,6 @@ int main() {
                         if (cursor_y > screen->height - 1)
                             cursor_y = screen->height - 1;
 
-                        // move cursor
-                        sheet_slide(sht_mouse, cursor_x, cursor_y);
-
                         if (packet.buttons == LEFT_CLICK) {
                             int x0 = cursor_x - win_x;
                             int y0 = cursor_y - win_y;
@@ -170,7 +168,8 @@ int main() {
                             if ((x0 > 3 && x0 < win_w - 25 && y0 > 1 && y0 < 20)
                                 || move_win) {
                                 move_win = true;
-                                sheet_slide(sht_win, win_x += packet.x, win_y -= packet.y);
+                                win_x += packet.x;
+                                win_y -= packet.y;
                             } else if (x0 > win_w - 25 && x0 < win_w -3 && y0 > 3 && y0 < 16) {
                                 sheet_updown(sht_win, -1);
                             } else {
@@ -185,6 +184,14 @@ int main() {
                         }
                     }
                 }
+                // move window
+                if (move_win) {
+                    sheet_slide(sht_win, win_x, win_y);
+                }
+
+               // move cursor
+                sheet_slide(sht_mouse, cursor_x, cursor_y);
+
             }
         } else if (fd == kbd_fd) {
             memset(keys, 0, 512);

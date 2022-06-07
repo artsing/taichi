@@ -172,8 +172,10 @@ main(void)
         printf(2, "cannot cd %s\n", buf+3);
       continue;
     }
-    if(fork1() == 0)
-      runcmd(parsecmd(buf));
+
+    if(fork1() == 0) {
+        runcmd(parsecmd(buf));
+    }
     wait();
   }
   printf(2, "sh exit...");

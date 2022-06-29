@@ -1,5 +1,5 @@
-# Pangu OS
+## Pangu OS
   unix-link operating system
   
-# Build And Run
+## Build and Run
   make qemu

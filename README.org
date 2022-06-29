@@ -1,7 +1,0 @@
-* pangu
-    unix-link operating system based on xv6 .
-    
-** run
-#+BEGIN_QUOTE
-    make qemu
-#+END_QUOTE

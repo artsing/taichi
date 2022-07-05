@@ -1,5 +1,5 @@
 #include<stdio.h>
-#include "ext2_fs.h"
+#include "../boot/ext2_fs.h"
 
 #define BLOCK_SIZE 1024
 

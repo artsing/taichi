@@ -1,6 +1,6 @@
 #include "ext2_types.h"
 #include "ext2_fs.h"
 
-void bootmain() {    
+void bootmain() {
 	return ;
 }

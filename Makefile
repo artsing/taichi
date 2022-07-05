@@ -36,9 +36,8 @@ bootblock.o: boot/bootasm.S boot/bootmain.c
 echo:
 	@echo $(CFLAGS)
 
-a.out: test/test.c
-	$(CC) -I. -o test/test.o $^
-	$(LD) -o a.out test/test.o
+git-push:
+	git push -u origin main
 
 .PHONY: clean
 clean:

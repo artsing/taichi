@@ -2,13 +2,19 @@
 #include "../boot/ext2_fs.h"
 
 #define BLOCK_SIZE 1024
+#define INODE_SIZE 128
+#define ENTRY_SIZE 5
 
 struct ext2_super_block ext2_sb;
 struct ext2_group_desc ext2_gd;
+struct ext2_inode ext2_i[INODE_SIZE];
+struct ext2_dir_entry_2 ext2_entry[ENTRY_SIZE];
 
 void dumpUUID(const char*, __u8*);
 void dumpSuperBlock(struct ext2_super_block);
 void dumpGroupDesc(struct ext2_group_desc);
+void dumpInode(struct ext2_inode);
+void dumpEntry(struct ext2_dir_entry_2);
 
 void read_ext2() {
     FILE *fp;
@@ -24,6 +30,44 @@ void read_ext2() {
     // group desc
     fread(&ext2_gd, sizeof(struct ext2_group_desc), 1, fp);
     dumpGroupDesc(ext2_gd);
+
+    fseek(fp, 8*BLOCK_SIZE, 0);
+
+    fread(ext2_i, sizeof(struct ext2_inode), INODE_SIZE, fp);
+    dumpInode(ext2_i[1]);
+    dumpInode(ext2_i[11]);
+
+    fseek(fp, 24*BLOCK_SIZE, 0);
+    // .
+    fread(ext2_entry, 12, 1, fp);
+    dumpEntry(ext2_entry[0]);
+    // ..
+    fread(ext2_entry+1, 12, 1, fp);
+    dumpEntry(ext2_entry[1]);
+    // lost+found
+    fread(ext2_entry+2, 20, 1, fp);
+    dumpEntry(ext2_entry[2]);
+    // hello.txt
+    fread(ext2_entry+3, 20, 1, fp);
+    dumpEntry(ext2_entry[3]);
+    // boot
+    fread(ext2_entry+4, 12, 1, fp);
+    dumpEntry(ext2_entry[4]);
+    // main.c
+    fread(ext2_entry+5, 16, 1, fp);
+    dumpEntry(ext2_entry[5]);
+
+    // inode
+    fseek(fp, 38*BLOCK_SIZE, 0);
+    // .
+    fread(ext2_entry, 12, 1, fp);
+    dumpEntry(ext2_entry[0]);
+    // ..
+    fread(ext2_entry+1, 12, 1, fp);
+    dumpEntry(ext2_entry[1]);
+    // kernel 
+    fread(ext2_entry+2, 20, 1, fp);
+    dumpEntry(ext2_entry[2]);
 
     fclose(fp);
 }
@@ -77,8 +121,47 @@ void dumpGroupDesc(struct ext2_group_desc gd) {
     printf("-------------------------------------------------\n");
 }
 
+void dumpInode(struct ext2_inode i) {
+    printf("-------------------------------------------------\n");
+    printf("                   ext2 inode\n");
+    printf("-------------------------------------------------\n");
+
+
+    printf("i_mode : %-d\n", i.i_mode);
+    printf("i_uid : %-d\n", i.i_uid);
+    printf("i_size : %-d\n", i.i_size);
+    printf("i_atime : %-d\n", i.i_atime);
+    printf("i_ctime : %-d\n", i.i_ctime);
+    printf("i_mtime : %-d\n", i.i_mtime);
+    printf("i_dtime : %-d\n", i.i_dtime);
+    printf("i_gid : %-d\n", i.i_gid);
+    printf("i_links_count : %-d\n", i.i_links_count);
+    printf("i_blocks : %-d\n", i.i_blocks);
+    printf("i_flags : %-d\n", i.i_flags);
+    for (int j=0; j<i.i_blocks; j++) {
+        printf("i_block[%d] : %-d\n", j, i.i_block[j]);
+    }
+    printf("i_generation : %-d\n", i.i_generation);
+    printf("i_file_acl : %-d\n", i.i_file_acl);
+    printf("i_dir_acl : %-d\n", i.i_dir_acl);
+    printf("i_faddr : %-d\n", i.i_faddr);
+
+    printf("-------------------------------------------------\n");
+}
+
+void dumpEntry(struct ext2_dir_entry_2 entry) {
+     printf("-------------------------------------------------\n");
+     printf("inode : %-d\n", entry.inode);
+     printf("rec_len : %-d\n", entry.rec_len);
+     printf("name_len : %-d\n", entry.name_len);
+     printf("file_type : %-d\n", entry.file_type);
+     printf("name : %s\n", entry.name);
+     printf("-------------------------------------------------\n");
+
+}
+
 void dumpUUID(const char *name, __u8* uuid) {
-    printf(name);
+    printf("%s", name);
     for (int i=0; i<16;) {
         printf("%02x", ((unsigned char*) uuid)[i++]);
         if (i == 4 || i == 6 || i==8 || i==10) {

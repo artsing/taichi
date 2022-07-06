@@ -1,5 +1,7 @@
 #include<stdio.h>
+#include<time.h>
 #include "../boot/ext2_fs.h"
+
 
 #define BLOCK_SIZE 1024
 #define INODE_SIZE 128
@@ -10,10 +12,12 @@ struct ext2_group_desc ext2_gd;
 struct ext2_inode ext2_i[INODE_SIZE];
 struct ext2_dir_entry_2 ext2_entry[ENTRY_SIZE];
 
+void raw_read_block(FILE* fp, __u32 block, __u32 size, __u8* buffer);
+
 void dumpUUID(const char*, __u8*);
 void dumpSuperBlock(struct ext2_super_block);
 void dumpGroupDesc(struct ext2_group_desc);
-void dumpInode(struct ext2_inode);
+void dumpInode(int inode, struct ext2_inode);
 void dumpEntry(struct ext2_dir_entry_2);
 
 void read_ext2() {
@@ -34,8 +38,8 @@ void read_ext2() {
     fseek(fp, 8*BLOCK_SIZE, 0);
 
     fread(ext2_i, sizeof(struct ext2_inode), INODE_SIZE, fp);
-    dumpInode(ext2_i[1]);
-    dumpInode(ext2_i[11]);
+    dumpInode(2, ext2_i[1]);
+    dumpInode(12, ext2_i[11]);
 
     fseek(fp, 24*BLOCK_SIZE, 0);
     // .
@@ -65,11 +69,23 @@ void read_ext2() {
     // ..
     fread(ext2_entry+1, 12, 1, fp);
     dumpEntry(ext2_entry[1]);
-    // kernel 
+    // kernel
     fread(ext2_entry+2, 20, 1, fp);
     dumpEntry(ext2_entry[2]);
 
     fclose(fp);
+}
+
+/**
+ * read n block data to buffer
+ * @param fp   FILE
+ * @param block the block number
+ * @param size  read size
+ * @param buffer the buffer of read
+ */
+void raw_read_block(FILE* fp, __u32 block, __u32 size, __u8* buffer) {
+    fseek(fp, BLOCK_SIZE * block, 0);
+    fread(buffer, BLOCK_SIZE, size, fp);
 }
 
 void dumpSuperBlock(struct ext2_super_block sb) {
@@ -121,19 +137,29 @@ void dumpGroupDesc(struct ext2_group_desc gd) {
     printf("-------------------------------------------------\n");
 }
 
-void dumpInode(struct ext2_inode i) {
+char* timeToString(__u32 tm, char *buf, int size) {
+    time_t ts = tm;
+    struct tm *time = localtime(&ts);
+    strftime(buf, size, "%F %T", time);
+    return buf;
+}
+
+void dumpInode(int inode, struct ext2_inode i) {
     printf("-------------------------------------------------\n");
-    printf("                   ext2 inode\n");
+    printf("                   ext2 inode %d\n", inode);
     printf("-------------------------------------------------\n");
 
+    char str[100];
 
     printf("i_mode : %-d\n", i.i_mode);
     printf("i_uid : %-d\n", i.i_uid);
     printf("i_size : %-d\n", i.i_size);
-    printf("i_atime : %-d\n", i.i_atime);
-    printf("i_ctime : %-d\n", i.i_ctime);
-    printf("i_mtime : %-d\n", i.i_mtime);
-    printf("i_dtime : %-d\n", i.i_dtime);
+
+    printf("i_atime : %s\n", timeToString(i.i_atime, str, sizeof(str)));
+
+    printf("i_ctime : %s\n", timeToString(i.i_ctime, str, sizeof(str)));
+    printf("i_mtime : %s\n", timeToString(i.i_mtime, str, sizeof(str)));
+    printf("i_dtime : %s\n", timeToString(i.i_dtime, str, sizeof(str)));
     printf("i_gid : %-d\n", i.i_gid);
     printf("i_links_count : %-d\n", i.i_links_count);
     printf("i_blocks : %-d\n", i.i_blocks);

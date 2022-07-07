@@ -1,9 +1,10 @@
 #include<stdio.h>
 #include<time.h>
 #include "../boot/ext2_fs.h"
+#include <math.h>
 
-
-#define BLOCK_SIZE 1024
+#define BOOT_SIZE 1024
+#define BLOCK_SIZE 2048
 #define INODE_SIZE 128
 #define ENTRY_SIZE 5
 
@@ -12,20 +13,23 @@ struct ext2_group_desc ext2_gd;
 struct ext2_inode ext2_i[INODE_SIZE];
 struct ext2_dir_entry_2 ext2_entry[ENTRY_SIZE];
 
-void raw_read_block(FILE* fp, __u32 block, __u32 size, __u8* buffer);
+char* timeToString(__u32 tm, char *buf, int size);
 
 void dumpUUID(const char*, __u8*);
 void dumpSuperBlock(struct ext2_super_block);
 void dumpGroupDesc(struct ext2_group_desc);
 void dumpInode(int inode, struct ext2_inode);
 void dumpEntry(struct ext2_dir_entry_2);
+void findInode(char*, struct ext2_inode *);
+int equalsString(char *s, char *d, int sn, int dn);
+
+FILE *fp;
 
 void read_ext2() {
-    FILE *fp;
     fp=fopen("fs.img","rb");
 
     // boot
-    fseek(fp, BLOCK_SIZE, 0);
+    fseek(fp, BOOT_SIZE, 0);
 
     // super block
     fread(&ext2_sb, sizeof(struct ext2_super_block), 1, fp);
@@ -35,63 +39,74 @@ void read_ext2() {
     fread(&ext2_gd, sizeof(struct ext2_group_desc), 1, fp);
     dumpGroupDesc(ext2_gd);
 
-    fseek(fp, 8*BLOCK_SIZE, 0);
-
+    // inode table
+    fseek(fp, ext2_gd.bg_inode_table *BLOCK_SIZE, 0);
     fread(ext2_i, sizeof(struct ext2_inode), INODE_SIZE, fp);
     dumpInode(2, ext2_i[1]);
     dumpInode(12, ext2_i[11]);
 
-    fseek(fp, 24*BLOCK_SIZE, 0);
-    // .
-    fread(ext2_entry, 12, 1, fp);
-    dumpEntry(ext2_entry[0]);
-    // ..
-    fread(ext2_entry+1, 12, 1, fp);
-    dumpEntry(ext2_entry[1]);
-    // lost+found
-    fread(ext2_entry+2, 20, 1, fp);
-    dumpEntry(ext2_entry[2]);
-    // hello.txt
-    fread(ext2_entry+3, 20, 1, fp);
-    dumpEntry(ext2_entry[3]);
-    // boot
-    fread(ext2_entry+4, 12, 1, fp);
-    dumpEntry(ext2_entry[4]);
-    // main.c
-    fread(ext2_entry+5, 16, 1, fp);
-    dumpEntry(ext2_entry[5]);
-
-    // inode
-    fseek(fp, 38*BLOCK_SIZE, 0);
-    // .
-    fread(ext2_entry, 12, 1, fp);
-    dumpEntry(ext2_entry[0]);
-    // ..
-    fread(ext2_entry+1, 12, 1, fp);
-    dumpEntry(ext2_entry[1]);
-    // kernel
-    fread(ext2_entry+2, 20, 1, fp);
-    dumpEntry(ext2_entry[2]);
+    // search boot dir
+    findInode("///boot/", &ext2_i[1]);
 
     fclose(fp);
 }
 
-/**
- * read n block data to buffer
- * @param fp   FILE
- * @param block the block number
- * @param size  read size
- * @param buffer the buffer of read
- */
-void raw_read_block(FILE* fp, __u32 block, __u32 size, __u8* buffer) {
-    fseek(fp, BLOCK_SIZE * block, 0);
-    fread(buffer, BLOCK_SIZE, size, fp);
+
+void findInode(char *path, struct ext2_inode *inode) {
+    fseek(fp, inode->i_block[0]*BLOCK_SIZE, 0);
+
+    char *s = path;
+    while(*s == '/') s++;
+    char *e = s;
+    __u32 length = 0;
+
+    while(e++) {
+        length++;
+        if (*e == '/') {
+            break;
+        }
+    }
+
+    __u32 len = inode->i_blocks * 512;
+    char buf[BLOCK_SIZE];
+    fread(buf, sizeof(buf), 1, fp);
+
+    __u8 *pos = (__u8*) buf;
+    struct ext2_dir_entry_2 *entry;
+    __u32 boot_ino = 0;
+
+    while (len > 0) {
+        entry = (struct ext2_dir_entry_2*) pos;
+        dumpEntry(*entry);
+        pos += entry->rec_len;
+        len -= entry->rec_len;
+        if (equalsString(s, entry->name, length, entry->name_len)) {
+            boot_ino = entry->inode;
+            printf("boot inode is %d\n", boot_ino);
+            break;
+        }
+    }
+
+}
+
+int equalsString(char *s, char *d, int sn, int dn) {
+    if (sn != dn || sn < 0) {
+        return 0;
+    }
+
+    while (sn--) {
+        if (*s++ != *d++) {
+            return 0;
+        }
+    }
+    return 1;
 }
 
 void dumpSuperBlock(struct ext2_super_block sb) {
     printf("-------------------------------------------------\n");
     printf("                ext2 super block\n");
     printf("-------------------------------------------------\n");
+    char str[100];
 
     printf("s_inodes_count : %d\n", sb.s_inodes_count);
     printf("s_blocks_count : %d\n", sb.s_blocks_count);
@@ -99,14 +114,16 @@ void dumpSuperBlock(struct ext2_super_block sb) {
     printf("s_free_blocks_count : %d\n", sb.s_free_blocks_count);
     printf("s_free_inodes_count : %d\n", sb.s_free_inodes_count);
     printf("s_first_data_block : %d\n", sb.s_first_data_block);
-    printf("s_log_block_size : (2^%d*1024)\n", sb.s_log_block_size);
-    printf("s_log_frag_size : (2^%d*1024)\n", sb.s_log_frag_size);
+    double a  = pow(2, (double)sb.s_log_block_size);
+    double b = pow(2, (double)sb.s_log_frag_size);
+    printf("s_log_block_size : %d\n", (int)a * 1024);
+    printf("s_log_frag_size : %d\n", (int)b * 1024);
     printf("s_blocks_per_group : %d\n", sb.s_blocks_per_group);
     printf("s_frags_per_group : %d\n", sb.s_frags_per_group);
     printf("s_inodes_per_group : %d\n", sb.s_inodes_per_group);
 
-    printf("s_mtime : %d\n", sb.s_mtime);
-    printf("s_wtime : %d\n", sb.s_wtime);
+    printf("s_mtime : %s\n", timeToString(sb.s_mtime, str, sizeof(str)));
+    printf("s_wtime : %s\n", timeToString(sb.s_wtime, str, sizeof(str)));
     printf("s_mnt_count : %d\n", sb.s_mnt_count);
     printf("s_magic : 0x%X\n", sb.s_magic);
     printf("s_state : %d\n", sb.s_state);
@@ -162,9 +179,9 @@ void dumpInode(int inode, struct ext2_inode i) {
     printf("i_dtime : %s\n", timeToString(i.i_dtime, str, sizeof(str)));
     printf("i_gid : %-d\n", i.i_gid);
     printf("i_links_count : %-d\n", i.i_links_count);
-    printf("i_blocks : %-d\n", i.i_blocks);
+    printf("i_blocks : %-d\n", (i.i_blocks * 512/BLOCK_SIZE));
     printf("i_flags : %-d\n", i.i_flags);
-    for (int j=0; j<i.i_blocks; j++) {
+    for (int j=0; j<(i.i_blocks * 512 / BLOCK_SIZE); j++) {
         printf("i_block[%d] : %-d\n", j, i.i_block[j]);
     }
     printf("i_generation : %-d\n", i.i_generation);

@@ -20,8 +20,9 @@ void dumpSuperBlock(struct ext2_super_block);
 void dumpGroupDesc(struct ext2_group_desc);
 void dumpInode(int inode, struct ext2_inode);
 void dumpEntry(struct ext2_dir_entry_2);
-void findInode(char*, struct ext2_inode *);
+void findInode(char*, struct ext2_inode *, struct ext2_inode *);
 int equalsString(char *s, char *d, int sn, int dn);
+int fetchName(char *path, char **s, char **e, __u32 *length);
 
 FILE *fp;
 
@@ -46,47 +47,69 @@ void read_ext2() {
     dumpInode(12, ext2_i[11]);
 
     // search boot dir
-    findInode("///boot/", &ext2_i[1]);
+    findInode("/boot/kernel", &ext2_i[1], ext2_i);
 
     fclose(fp);
 }
 
 
-void findInode(char *path, struct ext2_inode *inode) {
+void findInode(char *path, struct ext2_inode *inode, struct ext2_inode *table) {
     fseek(fp, inode->i_block[0]*BLOCK_SIZE, 0);
 
+    char *p = path;
+
     char *s = path;
-    while(*s == '/') s++;
     char *e = s;
     __u32 length = 0;
 
-    while(e++) {
-        length++;
-        if (*e == '/') {
-            break;
-        }
-    }
-
-    __u32 len = inode->i_blocks * 512;
     char buf[BLOCK_SIZE];
-    fread(buf, sizeof(buf), 1, fp);
 
-    __u8 *pos = (__u8*) buf;
-    struct ext2_dir_entry_2 *entry;
-    __u32 boot_ino = 0;
+    do {
+        fetchName(p, &s, &e, &length);
+        if (length <= 0) break;
+        p = e;
 
-    while (len > 0) {
-        entry = (struct ext2_dir_entry_2*) pos;
-        dumpEntry(*entry);
-        pos += entry->rec_len;
-        len -= entry->rec_len;
-        if (equalsString(s, entry->name, length, entry->name_len)) {
-            boot_ino = entry->inode;
-            printf("boot inode is %d\n", boot_ino);
+        __u32 len = inode->i_blocks * 512;
+        fread(buf, sizeof(buf), 1, fp);
+
+        __u8 *pos = (__u8*) buf;
+        struct ext2_dir_entry_2 *entry;
+        __u32 boot_ino = 0;
+
+        while (len > 0) {
+            entry = (struct ext2_dir_entry_2*) pos;
+            dumpEntry(*entry);
+
+            if (entry->rec_len <= 0) break;
+
+            pos += entry->rec_len;
+            len -= entry->rec_len;
+            printf("len = %d\n", len);
+
+            if (equalsString(s, entry->name, length, entry->name_len)) {
+                boot_ino = entry->inode;
+                inode = &table[boot_ino - 1];
+                break;
+            }
+            printf("len = %d\n", len);
+
+        }
+
+    } while (1);
+
+}
+
+int fetchName(char *path, char **s, char **e, __u32 *length) {
+    *s = path;
+    while(**s == '/') (*s)++;
+    *e = *s;
+    *length = 0;
+    while((*e)++) {
+        (*length)++;
+        if (**e == '/') {
             break;
         }
     }
-
 }
 
 int equalsString(char *s, char *d, int sn, int dn) {

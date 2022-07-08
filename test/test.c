@@ -4,9 +4,10 @@
 #include <math.h>
 
 #define BOOT_SIZE 1024
-#define BLOCK_SIZE 2048
 #define INODE_SIZE 128
-#define ENTRY_SIZE 5
+
+__u32 BLOCK_SIZE;
+#define ENTRY_SIZE 10 
 
 struct ext2_super_block ext2_sb;
 struct ext2_group_desc ext2_gd;
@@ -36,6 +37,7 @@ void read_ext2() {
     fread(&ext2_sb, sizeof(struct ext2_super_block), 1, fp);
     dumpSuperBlock(ext2_sb);
 
+
     // group desc
     fread(&ext2_gd, sizeof(struct ext2_group_desc), 1, fp);
     dumpGroupDesc(ext2_gd);
@@ -44,7 +46,6 @@ void read_ext2() {
     fseek(fp, ext2_gd.bg_inode_table *BLOCK_SIZE, 0);
     fread(ext2_i, sizeof(struct ext2_inode), INODE_SIZE, fp);
     dumpInode(2, ext2_i[1]);
-    dumpInode(12, ext2_i[11]);
 
     // search boot dir
     findInode("/boot/kernel", &ext2_i[1], ext2_i);
@@ -66,37 +67,46 @@ void findInode(char *path, struct ext2_inode *inode, struct ext2_inode *table) {
         fetchName(path, &s, &e, &length);
         path = e;
 
-        __u32 len = inode->i_blocks * 512;
-        fseek(fp, inode->i_block[0]*BLOCK_SIZE, 0);
-        fread(buf, sizeof(buf), 1, fp);
+        for (int bx = 0; bx < inode->i_blocks * 512 / BLOCK_SIZE; bx++) {
+            fseek(fp, inode->i_block[bx]*BLOCK_SIZE, 0);
+            fread(buf, sizeof(buf), 1, fp);
 
-        __u8 *pos = (__u8*) buf;
-        struct ext2_dir_entry_2 *entry;
-        __u32 boot_ino = 0;
+            __u8 *pos = (__u8*) buf;
+            struct ext2_dir_entry_2 *entry;
+            __u32 boot_ino = 0;
 
-        if (file_type == 1) {
-            while (pos < buf + BLOCK_SIZE)
-                printf("%c", *(pos++));
-        }
+            int len = BLOCK_SIZE;
+            if (file_type == 1) {
+                for (int i=0; i<inode->i_size; i++) {
+                    printf("%c", *(pos++));
+                }
+            } else if (file_type == 2 ){
+                int found = 0;
+                while (len > 0 && file_type == 2) {
+                    entry = (struct ext2_dir_entry_2*) pos;
+                    dumpEntry(*entry);
 
-        while (len > 0 && file_type == 2) {
-            entry = (struct ext2_dir_entry_2*) pos;
-            dumpEntry(*entry);
+                    if (entry->rec_len <= 0) break;
 
-            if (entry->rec_len <= 0) break;
+                    pos += entry->rec_len;
+                    len -= entry->rec_len;
 
-            pos += entry->rec_len;
-            len -= entry->rec_len;
+                    if (equalsString(s, entry->name, length, entry->name_len)) {
+                        file_type = entry->file_type;
+                        boot_ino = entry->inode;
+                        inode = &(table[boot_ino - 1]);
+                        dumpInode(boot_ino, *inode);
+                        found = 1;
+                        break;
+                    }
+                }
 
-            if (equalsString(s, entry->name, length, entry->name_len)) {
-                file_type = entry->file_type;
-                boot_ino = entry->inode;
-                inode = &(table[boot_ino - 1]);
-                dumpInode(boot_ino, *inode);
-                break;
+                if (found == 1) {
+                    break;
+                }
             }
-        }
 
+        }
     } while (length > 0);
 
 }
@@ -141,8 +151,9 @@ void dumpSuperBlock(struct ext2_super_block sb) {
     printf("s_free_inodes_count : %d\n", sb.s_free_inodes_count);
     printf("s_first_data_block : %d\n", sb.s_first_data_block);
     double a  = pow(2, (double)sb.s_log_block_size);
+    BLOCK_SIZE = (__u32) a * 1024;
     double b = pow(2, (double)sb.s_log_frag_size);
-    printf("s_log_block_size : %d\n", (int)a * 1024);
+    printf("s_log_block_size : %d\n", BLOCK_SIZE);
     printf("s_log_frag_size : %d\n", (int)b * 1024);
     printf("s_blocks_per_group : %d\n", sb.s_blocks_per_group);
     printf("s_frags_per_group : %d\n", sb.s_frags_per_group);

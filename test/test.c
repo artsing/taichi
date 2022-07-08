@@ -7,7 +7,7 @@
 #define INODE_SIZE 128
 
 __u32 BLOCK_SIZE;
-#define ENTRY_SIZE 10 
+#define ENTRY_SIZE 10
 
 struct ext2_super_block ext2_sb;
 struct ext2_group_desc ext2_gd;
@@ -55,7 +55,6 @@ void read_ext2() {
 
 
 void findInode(char *path, struct ext2_inode *inode, struct ext2_inode *table) {
-
     char *s = path;
     char *e = s;
     __u32 length = 0;

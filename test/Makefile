@@ -13,3 +13,7 @@ mount: kernel
 
 umount:
 	sudo umount mnt
+
+clean:
+	rm a.out
+	rm fs.img

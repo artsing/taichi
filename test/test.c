@@ -61,8 +61,8 @@ void findInode(char *path, struct ext2_inode *inode, struct ext2_inode *table) {
 
     char buf[BLOCK_SIZE];
 
+    int file_type = 2;
     do {
-
         fetchName(path, &s, &e, &length);
         path = e;
 
@@ -74,7 +74,12 @@ void findInode(char *path, struct ext2_inode *inode, struct ext2_inode *table) {
         struct ext2_dir_entry_2 *entry;
         __u32 boot_ino = 0;
 
-        while (len > 0) {
+        if (file_type == 1) {
+            while (pos < buf + BLOCK_SIZE)
+                printf("%c", *(pos++));
+        }
+
+        while (len > 0 && file_type == 2) {
             entry = (struct ext2_dir_entry_2*) pos;
             dumpEntry(*entry);
 
@@ -84,6 +89,7 @@ void findInode(char *path, struct ext2_inode *inode, struct ext2_inode *table) {
             len -= entry->rec_len;
 
             if (equalsString(s, entry->name, length, entry->name_len)) {
+                file_type = entry->file_type;
                 boot_ino = entry->inode;
                 inode = &(table[boot_ino - 1]);
                 dumpInode(boot_ino, *inode);

@@ -22,7 +22,7 @@ void dumpInode(int inode, struct ext2_inode);
 void dumpEntry(struct ext2_dir_entry_2);
 void findInode(char*, struct ext2_inode *, struct ext2_inode *);
 int equalsString(char *s, char *d, int sn, int dn);
-int fetchName(char *path, char **s, char **e, __u32 *length);
+void fetchName(char *path, char **s, char **e, __u32 *length);
 
 FILE *fp;
 
@@ -54,9 +54,6 @@ void read_ext2() {
 
 
 void findInode(char *path, struct ext2_inode *inode, struct ext2_inode *table) {
-    fseek(fp, inode->i_block[0]*BLOCK_SIZE, 0);
-
-    char *p = path;
 
     char *s = path;
     char *e = s;
@@ -65,11 +62,12 @@ void findInode(char *path, struct ext2_inode *inode, struct ext2_inode *table) {
     char buf[BLOCK_SIZE];
 
     do {
-        fetchName(p, &s, &e, &length);
-        if (length <= 0) break;
-        p = e;
+
+        fetchName(path, &s, &e, &length);
+        path = e;
 
         __u32 len = inode->i_blocks * 512;
+        fseek(fp, inode->i_block[0]*BLOCK_SIZE, 0);
         fread(buf, sizeof(buf), 1, fp);
 
         __u8 *pos = (__u8*) buf;
@@ -84,27 +82,26 @@ void findInode(char *path, struct ext2_inode *inode, struct ext2_inode *table) {
 
             pos += entry->rec_len;
             len -= entry->rec_len;
-            printf("len = %d\n", len);
 
             if (equalsString(s, entry->name, length, entry->name_len)) {
                 boot_ino = entry->inode;
-                inode = &table[boot_ino - 1];
+                inode = &(table[boot_ino - 1]);
+                dumpInode(boot_ino, *inode);
                 break;
             }
-            printf("len = %d\n", len);
-
         }
 
-    } while (1);
+    } while (length > 0);
 
 }
 
-int fetchName(char *path, char **s, char **e, __u32 *length) {
+void fetchName(char *path, char **s, char **e, __u32 *length) {
     *s = path;
     while(**s == '/') (*s)++;
+
     *e = *s;
     *length = 0;
-    while((*e)++) {
+    while(*((*e)++)) {
         (*length)++;
         if (**e == '/') {
             break;

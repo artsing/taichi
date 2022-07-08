@@ -4,3 +4,6 @@ _*
 build
 resources
 TAGS
+test/a.out
+test/fs.img
+test/mnt

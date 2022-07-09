@@ -21,7 +21,7 @@ void dumpSuperBlock(struct ext2_super_block);
 void dumpGroupDesc(struct ext2_group_desc);
 void dumpInode(int inode, struct ext2_inode);
 void dumpEntry(struct ext2_dir_entry_2);
-void findInode(char*, struct ext2_inode *, struct ext2_inode *);
+struct ext2_inode* findInode(char*, struct ext2_inode *, struct ext2_inode *);
 int equalsString(char *s, char *d, int sn, int dn);
 void fetchName(char *path, char **s, char **e, __u32 *length);
 
@@ -48,13 +48,15 @@ void read_ext2() {
     dumpInode(2, ext2_i[1]);
 
     // search boot dir
-    findInode("/boot/kernel", &ext2_i[1], ext2_i);
+    struct ext2_inode* inode = findInode("/boot/kernel", &ext2_i[1], ext2_i);
+    if (inode != NULL) {
+    }
 
     fclose(fp);
 }
 
 
-void findInode(char *path, struct ext2_inode *inode, struct ext2_inode *table) {
+struct ext2_inode* findInode(char *path, struct ext2_inode *inode, struct ext2_inode *table) {
     char *s = path;
     char *e = s;
     __u32 length = 0;
@@ -62,10 +64,20 @@ void findInode(char *path, struct ext2_inode *inode, struct ext2_inode *table) {
     char buf[BLOCK_SIZE];
 
     int file_type = 2;
+    int found = 0;
     do {
         fetchName(path, &s, &e, &length);
         path = e;
 
+        if (length <= 0) {
+            if (found) {
+                return inode;
+            } else {
+                return NULL;
+            }
+        }
+
+        found = 0;
         for (int bx = 0; bx < inode->i_blocks * 512 / BLOCK_SIZE; bx++) {
             fseek(fp, inode->i_block[bx]*BLOCK_SIZE, 0);
             fread(buf, sizeof(buf), 1, fp);
@@ -79,8 +91,7 @@ void findInode(char *path, struct ext2_inode *inode, struct ext2_inode *table) {
                 for (int i=0; i<inode->i_size; i++) {
                     printf("%c", *(pos++));
                 }
-            } else if (file_type == 2 ){
-                int found = 0;
+            } else if (file_type == 2 ) {
                 while (len > 0 && file_type == 2) {
                     entry = (struct ext2_dir_entry_2*) pos;
                     dumpEntry(*entry);
@@ -104,7 +115,10 @@ void findInode(char *path, struct ext2_inode *inode, struct ext2_inode *table) {
                     break;
                 }
             }
+        }
 
+        if (!found) {
+            return NULL;
         }
     } while (length > 0);
 
@@ -114,9 +128,8 @@ void fetchName(char *path, char **s, char **e, __u32 *length) {
     *s = path;
     while(**s == '/') (*s)++;
 
-    *e = *s;
     *length = 0;
-    while(*((*e)++)) {
+    for (*e = *s; **e; (*e)++) {
         (*length)++;
         if (**e == '/') {
             break;
@@ -204,7 +217,7 @@ void dumpInode(int inode, struct ext2_inode i) {
 
     char str[100];
 
-    printf("i_mode : %-d\n", i.i_mode);
+    printf("i_mode : %x\n", i.i_mode);
     printf("i_uid : %-d\n", i.i_uid);
     printf("i_size : %-d\n", i.i_size);
 

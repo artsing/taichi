@@ -24,6 +24,7 @@ void dumpEntry(struct ext2_dir_entry_2);
 struct ext2_inode* findInode(char*, struct ext2_inode *);
 int equalsString(char *s, char *d, int sn, int dn);
 void fetchName(char *path, char **s, char **e, __u32 *length);
+__u32 readFile(struct ext2_inode *inode, __u8* buf, __u32 offset, __u32 size);
 
 FILE *fp;
 
@@ -46,13 +47,32 @@ void read_ext2() {
     fseek(fp, ext2_gd.bg_inode_table *BLOCK_SIZE, 0);
     fread(ext2_i, sizeof(struct ext2_inode), INODE_SIZE, fp);
 
-    // search boot dir
+    // search kernel image
     struct ext2_inode* inode = findInode("/boot/kernel", ext2_i);
     if (inode == NULL) {
         printf("not found\n");
     }
 
     fclose(fp);
+}
+
+__u32 readFile(struct ext2_inode *inode, __u8 *buf, __u32 offset, __u32 size) {
+    if (inode == NULL || buf == NULL) {
+        return -1;
+    }
+
+    if (offset > inode->i_size || size > BLOCK_SIZE) {
+        return -1;
+    }
+
+    __u32 b1 = offset / BLOCK_SIZE;
+    __u32 s1 = offset % BLOCK_SIZE;
+    __u32 e1 = BLOCK_SIZE - s1;
+
+    __u32 b2 = (offset + size) / BLOCK_SIZE;
+    __u32 s2 = 0;
+    __u32 e2 = (offset + size) % BLOCK_SIZE;
+
 }
 
 struct ext2_inode* findInode(char *path,  struct ext2_inode *table) {

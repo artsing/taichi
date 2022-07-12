@@ -49,9 +49,15 @@ void read_ext2() {
 
     // search kernel image
     struct ext2_inode* inode = findInode("/boot/kernel", ext2_i);
-    if (inode == NULL) {
-        printf("not found\n");
+    if (inode != NULL) {
+        __u8 buf[inode->i_size];
+        __u32 n = readFile(inode, buf, 0, sizeof(buf));
+        for (__u32 i = 0; i < n; i++) {
+            printf("%c", buf[i]);
+        }
+        printf("\n");
     }
+
 
     fclose(fp);
 }
@@ -61,18 +67,44 @@ __u32 readFile(struct ext2_inode *inode, __u8 *buf, __u32 offset, __u32 size) {
         return -1;
     }
 
-    if (offset > inode->i_size || size > BLOCK_SIZE) {
+    if (offset > inode->i_size) {
         return -1;
+    }
+
+    if (offset + size > inode->i_size) {
+        size = inode->i_size - offset;
     }
 
     __u32 b1 = offset / BLOCK_SIZE;
     __u32 s1 = offset % BLOCK_SIZE;
-    __u32 e1 = BLOCK_SIZE - s1;
+    __u32 len = BLOCK_SIZE - s1;
+
+    if (len > size) {
+        len = size;
+    }
+
+    fseek(fp, (inode->i_block[b1] * BLOCK_SIZE) + offset, 0);
+    fread(buf, len, 1, fp);
+
+    if (len >= size) {
+        return len;
+    }
 
     __u32 b2 = (offset + size) / BLOCK_SIZE;
-    __u32 s2 = 0;
     __u32 e2 = (offset + size) % BLOCK_SIZE;
 
+    for (int bx = b1+1; bx < b2; bx++) {
+        fseek(fp, bx*BLOCK_SIZE, 0);
+        fread(buf+len, BLOCK_SIZE, 1, fp);
+        len += BLOCK_SIZE;
+    }
+
+    if (b2 > b1) {
+        fseek(fp, b2*BLOCK_SIZE, 0);
+        fread(buf+len, e2, 1, fp);
+    }
+
+    return size;
 }
 
 struct ext2_inode* findInode(char *path,  struct ext2_inode *table) {

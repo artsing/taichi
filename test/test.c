@@ -94,13 +94,13 @@ __u32 readFile(struct ext2_inode *inode, __u8 *buf, __u32 offset, __u32 size) {
     __u32 e2 = (offset + size) % BLOCK_SIZE;
 
     for (int bx = b1+1; bx < b2; bx++) {
-        fseek(fp, bx*BLOCK_SIZE, 0);
+        fseek(fp, inode->i_block[bx] * BLOCK_SIZE, 0);
         fread(buf+len, BLOCK_SIZE, 1, fp);
         len += BLOCK_SIZE;
     }
 
     if (b2 > b1) {
-        fseek(fp, b2*BLOCK_SIZE, 0);
+        fseek(fp, inode->i_block[b2]*BLOCK_SIZE, 0);
         fread(buf+len, e2, 1, fp);
     }
 

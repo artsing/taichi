@@ -51,13 +51,21 @@ void read_ext2() {
     struct ext2_inode* inode = findInode("/boot/kernel", ext2_i);
     if (inode != NULL) {
         __u8 buf[inode->i_size];
-        __u32 n = readFile(inode, buf, 0, sizeof(buf));
+        __u32 n = readFile(inode, buf, 0, 36);
         for (__u32 i = 0; i < n; i++) {
             printf("%c", buf[i]);
         }
         printf("\n");
     }
 
+    // inode bitmap
+    fseek(fp, ext2_gd.bg_inode_bitmap * BLOCK_SIZE, 0);
+    __u8 inode_bitmap[BLOCK_SIZE];
+    fread(inode_bitmap, 1, BLOCK_SIZE, fp);
+    for (__u8 i = 0; i<130; i++) {
+        printf("%x, ", inode_bitmap[i]);
+    }
+    // block bitmap
 
     fclose(fp);
 }
@@ -85,10 +93,6 @@ __u32 readFile(struct ext2_inode *inode, __u8 *buf, __u32 offset, __u32 size) {
 
     fseek(fp, (inode->i_block[b1] * BLOCK_SIZE) + offset, 0);
     fread(buf, len, 1, fp);
-
-    if (len >= size) {
-        return len;
-    }
 
     __u32 b2 = (offset + size) / BLOCK_SIZE;
     __u32 e2 = (offset + size) % BLOCK_SIZE;

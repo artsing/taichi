@@ -33,7 +33,7 @@ FILE *fp;
 void read_ext2() {
     fp=fopen("fs.img","rb");
 
-    // boot
+    // boot block
     fseek(fp, BOOT_SIZE, 0);
 
     // super block
@@ -60,19 +60,19 @@ void read_ext2() {
         printf("\n");
     }
 
-    // inode bitmap
-    __u8 inode_bitmap[BLOCK_SIZE];
-    __u32 inode_bytes = ext2_sb.s_inodes_count / 8;
-    fseek(fp, ext2_gd.bg_inode_bitmap * BLOCK_SIZE, 0);
-    fread(inode_bitmap, 1, BLOCK_SIZE, fp);
-    dumpBitmap("Inodes Bitmap", inode_bitmap, inode_bytes);
-
     // block bitmap
     __u8 block_bitmap[BLOCK_SIZE];
     __u32 block_bytes = ext2_sb.s_blocks_count / 8;
     fseek(fp, ext2_gd.bg_block_bitmap * BLOCK_SIZE, 0);
     fread(block_bitmap, 1, BLOCK_SIZE, fp);
     dumpBitmap("Blocks Bitmap", block_bitmap, block_bytes);
+
+    // inode bitmap
+    __u8 inode_bitmap[BLOCK_SIZE];
+    __u32 inode_bytes = ext2_sb.s_inodes_count / 8;
+    fseek(fp, ext2_gd.bg_inode_bitmap * BLOCK_SIZE, 0);
+    fread(inode_bitmap, 1, BLOCK_SIZE, fp);
+    dumpBitmap("Inodes Bitmap", inode_bitmap, inode_bytes);
 
     fclose(fp);
 }
@@ -82,7 +82,7 @@ void dumpBitmap(char *title, __u8 *bitmap, __u32 length) {
     printf("                  %s\n", title);
     printf("-------------------------------------------------\n");
 
-    for (__u8 i=0; i<length; i++) {
+    for (__u32 i=0; i<length; i++) {
         printf("%02x ", bitmap[i]);
         if (((i+1)/16) && ((i+1) % 16) == 0) {
             printf("\n");

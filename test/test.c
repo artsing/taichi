@@ -21,6 +21,8 @@ void dumpSuperBlock(struct ext2_super_block);
 void dumpGroupDesc(struct ext2_group_desc);
 void dumpInode(int inode, struct ext2_inode);
 void dumpEntry(struct ext2_dir_entry_2);
+void dumpBitmap(char *title, __u8 *bitmap, __u32 length);
+
 struct ext2_inode* findInode(char*, struct ext2_inode *);
 int equalsString(char *s, char *d, int sn, int dn);
 void fetchName(char *path, char **s, char **e, __u32 *length);
@@ -59,15 +61,33 @@ void read_ext2() {
     }
 
     // inode bitmap
-    fseek(fp, ext2_gd.bg_inode_bitmap * BLOCK_SIZE, 0);
     __u8 inode_bitmap[BLOCK_SIZE];
+    __u32 inode_bytes = ext2_sb.s_inodes_count / 8;
+    fseek(fp, ext2_gd.bg_inode_bitmap * BLOCK_SIZE, 0);
     fread(inode_bitmap, 1, BLOCK_SIZE, fp);
-    for (__u8 i = 0; i<130; i++) {
-        printf("%x, ", inode_bitmap[i]);
-    }
+    dumpBitmap("Inodes Bitmap", inode_bitmap, inode_bytes);
+
     // block bitmap
+    __u8 block_bitmap[BLOCK_SIZE];
+    __u32 block_bytes = ext2_sb.s_blocks_count / 8;
+    fseek(fp, ext2_gd.bg_block_bitmap * BLOCK_SIZE, 0);
+    fread(block_bitmap, 1, BLOCK_SIZE, fp);
+    dumpBitmap("Blocks Bitmap", block_bitmap, block_bytes);
 
     fclose(fp);
+}
+
+void dumpBitmap(char *title, __u8 *bitmap, __u32 length) {
+    printf("-------------------------------------------------\n");
+    printf("                  %s\n", title);
+    printf("-------------------------------------------------\n");
+
+    for (__u8 i=0; i<length; i++) {
+        printf("%02x ", bitmap[i]);
+        if (((i+1)/16) && ((i+1) % 16) == 0) {
+            printf("\n");
+        }
+    }
 }
 
 __u32 readFile(struct ext2_inode *inode, __u8 *buf, __u32 offset, __u32 size) {

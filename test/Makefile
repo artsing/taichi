@@ -1,5 +1,5 @@
 all: test.c
-	gcc test.c -lm -g
+	gcc test.c -lm -g -m32
 
 
 fs.img:

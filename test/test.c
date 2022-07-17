@@ -27,6 +27,8 @@ struct ext2_inode* findInode(char*, struct ext2_inode *);
 int equalsString(char *s, char *d, int sn, int dn);
 void fetchName(char *path, char **s, char **e, __u32 *length);
 __u32 readFile(struct ext2_inode *inode, __u8* buf, __u32 offset, __u32 size);
+static inline int find_first_zero_bit(const unsigned long *addr, unsigned size);
+int find_next_zero_bit(const unsigned long *addr, int size, int offset);
 
 FILE *fp;
 
@@ -73,6 +75,9 @@ void read_ext2() {
     fseek(fp, ext2_gd.bg_inode_bitmap * BLOCK_SIZE, 0);
     fread(inode_bitmap, 1, BLOCK_SIZE, fp);
     dumpBitmap("Inodes Bitmap", inode_bitmap, inode_bytes);
+
+    int ret = find_next_zero_bit((const unsigned long*)inode_bitmap, EXT2_INODES_PER_GROUP(&ext2_sb), 0);
+    printf("ret = %d\n", ret);
 
     fclose(fp);
 }
@@ -334,6 +339,63 @@ void dumpUUID(const char *name, __u8* uuid) {
         }
     }
     printf("\n");
+}
+
+/**
+ * find_next_zero_bit - find the first zero bit in a memory region
+ * @addr: The address to base the search on
+ * @offset: The bitnumber to start searching at
+ * @size: The maximum size to search
+ */
+int find_next_zero_bit(const unsigned long *addr, int size, int offset)
+{
+	const unsigned long *p = addr + (offset >> 5);
+	int set = 0, bit = offset & 31, res;
+
+	if (bit) {
+		/*
+		 * Look for zero in the first 32 bits.
+		 */
+		__asm__("bsfl %1,%0\n\t"
+			"jne 1f\n\t"
+			"movl $32, %0\n"
+			"1:"
+			: "=r" (set)
+			: "r" (~(*p >> bit)));
+		if (set < (32 - bit))
+			return set + offset;
+		set = 32 - bit;
+		p++;
+	}
+	/*
+	 * No zero yet, search remaining full bytes for a zero
+	 */
+	res = find_first_zero_bit(p, size - 32 * (p - addr));
+	return (offset + set + res);
+}
+
+static inline int find_first_zero_bit(const unsigned long *addr, unsigned size)
+{
+	int d0, d1, d2;
+	int res;
+
+	if (!size)
+		return 0;
+	/* This looks at memory. Mark it volatile to tell gcc not to move it around */
+	__asm__ __volatile__(
+		"movl $-1,%%eax\n\t"
+		"xorl %%edx,%%edx\n\t"
+		"repe; scasl\n\t"
+		"je 1f\n\t"
+		"xorl -4(%%edi),%%eax\n\t"
+		"subl $4,%%edi\n\t"
+		"bsfl %%eax,%%edx\n"
+		"1:\tsubl %%ebx,%%edi\n\t"
+		"shll $3,%%edi\n\t"
+		"addl %%edi,%%edx"
+		:"=d" (res), "=&c" (d0), "=&D" (d1), "=&a" (d2)
+		:"1" ((size + 31) >> 5), "2" (addr), "b" (addr) : "memory");
+	return res;
 }
 
 int main(int argc, char** argv) {

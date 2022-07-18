@@ -69,6 +69,19 @@ void read_ext2() {
     fread(block_bitmap, 1, BLOCK_SIZE, fp);
     dumpBitmap("Blocks Bitmap", block_bitmap, block_bytes);
 
+    int ret = find_next_zero_bit((const unsigned long*)block_bitmap, EXT2_BLOCKS_PER_GROUP(&ext2_sb), 0);
+    printf("ret = %d\n", ret);
+    ret = find_next_zero_bit((const unsigned long*)block_bitmap, EXT2_BLOCKS_PER_GROUP(&ext2_sb), ret+1);
+    printf("ret = %d\n", ret);
+    ret = find_next_zero_bit((const unsigned long*)block_bitmap, EXT2_BLOCKS_PER_GROUP(&ext2_sb), ret+1);
+    printf("ret = %d\n", ret);
+    ret = find_next_zero_bit((const unsigned long*)block_bitmap, EXT2_BLOCKS_PER_GROUP(&ext2_sb), ret+1);
+    printf("ret = %d\n", ret);
+    ret = find_next_zero_bit((const unsigned long*)block_bitmap, EXT2_BLOCKS_PER_GROUP(&ext2_sb), ret+1);
+    printf("ret = %d\n", ret);
+
+
+
     // inode bitmap
     __u8 inode_bitmap[BLOCK_SIZE];
     __u32 inode_bytes = ext2_sb.s_inodes_count / 8;
@@ -76,8 +89,12 @@ void read_ext2() {
     fread(inode_bitmap, 1, BLOCK_SIZE, fp);
     dumpBitmap("Inodes Bitmap", inode_bitmap, inode_bytes);
 
-    int ret = find_next_zero_bit((const unsigned long*)inode_bitmap, EXT2_INODES_PER_GROUP(&ext2_sb), 0);
+    ret = find_next_zero_bit((const unsigned long*)inode_bitmap, EXT2_INODES_PER_GROUP(&ext2_sb), 0);
     printf("ret = %d\n", ret);
+
+    ret = find_next_zero_bit((const unsigned long*)inode_bitmap, EXT2_INODES_PER_GROUP(&ext2_sb), ret + 1);
+    printf("ret = %d\n", ret);
+
 
     fclose(fp);
 }
@@ -145,7 +162,7 @@ struct ext2_inode* findInode(char *path,  struct ext2_inode *table) {
 
     int file_type = 2;
     int found = 0;
-    int ino = 2;
+    int ino = EXT2_ROOT_INO;
     struct ext2_inode *inode = &(table[ino-1]);
     dumpInode(2, *inode);
     int bytes = inode->i_size;

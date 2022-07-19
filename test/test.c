@@ -29,6 +29,8 @@ void fetchName(char *path, char **s, char **e, __u32 *length);
 __u32 readFile(struct ext2_inode *inode, __u8* buf, __u32 offset, __u32 size);
 static inline int find_first_zero_bit(const unsigned long *addr, unsigned size);
 int find_next_zero_bit(const unsigned long *addr, int size, int offset);
+void set_bit(__u8 *addr, int index);
+void clear_bit(__u8 *addr, int index);
 
 FILE *fp;
 
@@ -69,19 +71,6 @@ void read_ext2() {
     fread(block_bitmap, 1, BLOCK_SIZE, fp);
     dumpBitmap("Blocks Bitmap", block_bitmap, block_bytes);
 
-    int ret = find_next_zero_bit((const unsigned long*)block_bitmap, EXT2_BLOCKS_PER_GROUP(&ext2_sb), 0);
-    printf("ret = %d\n", ret);
-    ret = find_next_zero_bit((const unsigned long*)block_bitmap, EXT2_BLOCKS_PER_GROUP(&ext2_sb), ret+1);
-    printf("ret = %d\n", ret);
-    ret = find_next_zero_bit((const unsigned long*)block_bitmap, EXT2_BLOCKS_PER_GROUP(&ext2_sb), ret+1);
-    printf("ret = %d\n", ret);
-    ret = find_next_zero_bit((const unsigned long*)block_bitmap, EXT2_BLOCKS_PER_GROUP(&ext2_sb), ret+1);
-    printf("ret = %d\n", ret);
-    ret = find_next_zero_bit((const unsigned long*)block_bitmap, EXT2_BLOCKS_PER_GROUP(&ext2_sb), ret+1);
-    printf("ret = %d\n", ret);
-
-
-
     // inode bitmap
     __u8 inode_bitmap[BLOCK_SIZE];
     __u32 inode_bytes = ext2_sb.s_inodes_count / 8;
@@ -89,12 +78,17 @@ void read_ext2() {
     fread(inode_bitmap, 1, BLOCK_SIZE, fp);
     dumpBitmap("Inodes Bitmap", inode_bitmap, inode_bytes);
 
+    // alloc free block
+    int ret = find_next_zero_bit((const unsigned long*)block_bitmap, EXT2_BLOCKS_PER_GROUP(&ext2_sb), 0);
+    printf("block index = %d\n", ret);
+    set_bit(block_bitmap, ret);
+    dumpBitmap("Blocks Bitmap", block_bitmap, block_bytes);
+    clear_bit(block_bitmap, ret);
+    dumpBitmap("Blocks Bitmap", block_bitmap, block_bytes);
+
+    // alloc free inode
     ret = find_next_zero_bit((const unsigned long*)inode_bitmap, EXT2_INODES_PER_GROUP(&ext2_sb), 0);
-    printf("ret = %d\n", ret);
-
-    ret = find_next_zero_bit((const unsigned long*)inode_bitmap, EXT2_INODES_PER_GROUP(&ext2_sb), ret + 1);
-    printf("ret = %d\n", ret);
-
+    printf("inode index = %d\n", ret);
 
     fclose(fp);
 }
@@ -356,6 +350,14 @@ void dumpUUID(const char *name, __u8* uuid) {
         }
     }
     printf("\n");
+}
+
+void set_bit(__u8 *addr, int index) {
+    addr[index/8] |=  1 << (index % 8);
+}
+
+void clear_bit(__u8 *addr, int index) {
+    addr[index/8] &=  ~(1 << (index % 8));
 }
 
 /**

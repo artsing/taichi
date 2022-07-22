@@ -80,9 +80,9 @@ void read_ext2() {
     dumpBitmap("Inodes Bitmap", inode_bitmap, inode_bytes);
 
     // alloc free block
-    int ret = find_next_zero_bit((const unsigned long*)block_bitmap, EXT2_BLOCKS_PER_GROUP(&ext2_sb), 0);
-    printf("block index = %d\n", ret);
-    set_bit(block_bitmap, ret);
+    int free_blk = find_next_zero_bit((const unsigned long*)block_bitmap, EXT2_BLOCKS_PER_GROUP(&ext2_sb), 0);
+    printf("block index = %d\n", free_blk);
+    set_bit(block_bitmap, free_blk);
     dumpBitmap("Blocks Bitmap", block_bitmap, block_bytes);
 
     // write to fs.img
@@ -90,23 +90,27 @@ void read_ext2() {
     // fwrite(block_bitmap, 1, block_bytes, fp);
 
     // alloc free inode
-    ret = find_next_zero_bit((const unsigned long*)inode_bitmap, EXT2_INODES_PER_GROUP(&ext2_sb), 0);
-    printf("inode index = %d\n", ret);
+    int free_ino = find_next_zero_bit((const unsigned long*)inode_bitmap, EXT2_INODES_PER_GROUP(&ext2_sb), 0);
+    printf("inode index = %d\n", free_ino);
 
     char *name = "test123";
     int name_len = strlen(name);
 
     // test entry
     struct ext2_dir_entry_2 test_entry;
-    test_entry.inode = ret;
+    test_entry.inode = free_ino;
     test_entry.rec_len = EXT2_DIR_REC_LEN(name_len);
     test_entry.name_len = name_len;
     test_entry.file_type = EXT2_FT_REG_FILE;
     memcpy(&test_entry.name, name, name_len);
     dumpEntry(test_entry);
 
-    struct ext2_inode *test_inode = &inode_table[ret];
-    dumpInode(ret, *test_inode);
+    struct ext2_inode *test_inode = &inode_table[free_ino];
+    test_inode->i_mode = 0x81a4;
+    test_inode->i_size = BLOCK_SIZE;
+    test_inode->i_blocks = BLOCK_SIZE / 512;
+    test_inode->i_block[0] = free_blk;
+    dumpInode(free_ino + 1, *test_inode);
 
     fclose(fp);
 }

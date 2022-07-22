@@ -2,6 +2,7 @@
 #include<time.h>
 #include "../boot/ext2_fs.h"
 #include <math.h>
+#include <string.h>
 
 #define BOOT_SIZE 1024
 #define INODE_SIZE 128
@@ -11,7 +12,7 @@ __u32 BLOCK_SIZE;
 
 struct ext2_super_block ext2_sb;
 struct ext2_group_desc ext2_gd;
-struct ext2_inode ext2_i[INODE_SIZE];
+struct ext2_inode inode_table[INODE_SIZE];
 struct ext2_dir_entry_2 ext2_entry[ENTRY_SIZE];
 
 char* timeToString(__u32 tm, char *buf, int size);
@@ -35,7 +36,7 @@ void clear_bit(__u8 *addr, int index);
 FILE *fp;
 
 void read_ext2() {
-    fp=fopen("fs.img","rb");
+    fp=fopen("fs.img","rb+");
 
     // boot block
     fseek(fp, BOOT_SIZE, 0);
@@ -51,10 +52,10 @@ void read_ext2() {
 
     // inode table
     fseek(fp, ext2_gd.bg_inode_table *BLOCK_SIZE, 0);
-    fread(ext2_i, sizeof(struct ext2_inode), INODE_SIZE, fp);
+    fread(inode_table, sizeof(struct ext2_inode), INODE_SIZE, fp);
 
     // search kernel image
-    struct ext2_inode* inode = findInode("/boot/kernel", ext2_i);
+    struct ext2_inode* inode = findInode("/boot/kernel", inode_table);
     if (inode != NULL) {
         __u8 buf[inode->i_size];
         __u32 n = readFile(inode, buf, 0, 36);
@@ -83,12 +84,29 @@ void read_ext2() {
     printf("block index = %d\n", ret);
     set_bit(block_bitmap, ret);
     dumpBitmap("Blocks Bitmap", block_bitmap, block_bytes);
-    clear_bit(block_bitmap, ret);
-    dumpBitmap("Blocks Bitmap", block_bitmap, block_bytes);
+
+    // write to fs.img
+    // fseek(fp, ext2_gd.bg_block_bitmap * BLOCK_SIZE, 0);
+    // fwrite(block_bitmap, 1, block_bytes, fp);
 
     // alloc free inode
     ret = find_next_zero_bit((const unsigned long*)inode_bitmap, EXT2_INODES_PER_GROUP(&ext2_sb), 0);
     printf("inode index = %d\n", ret);
+
+    char *name = "test123";
+    int name_len = strlen(name);
+
+    // test entry
+    struct ext2_dir_entry_2 test_entry;
+    test_entry.inode = ret;
+    test_entry.rec_len = EXT2_DIR_REC_LEN(name_len);
+    test_entry.name_len = name_len;
+    test_entry.file_type = EXT2_FT_REG_FILE;
+    memcpy(&test_entry.name, name, name_len);
+    dumpEntry(test_entry);
+
+    struct ext2_inode *test_inode = &inode_table[ret];
+    dumpInode(ret, *test_inode);
 
     fclose(fp);
 }

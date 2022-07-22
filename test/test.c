@@ -25,6 +25,7 @@ void dumpEntry(struct ext2_dir_entry_2);
 void dumpBitmap(char *title, __u8 *bitmap, __u32 length);
 
 struct ext2_inode* findInode(char*, struct ext2_inode *);
+struct ext2_dir_entry_2* findLastEntry(struct ext2_inode*);
 int equalsString(char *s, char *d, int sn, int dn);
 void fetchName(char *path, char **s, char **e, __u32 *length);
 __u32 readFile(struct ext2_inode *inode, __u8* buf, __u32 offset, __u32 size);
@@ -98,11 +99,23 @@ void read_ext2() {
 
     // test entry
     struct ext2_dir_entry_2 test_entry;
-    test_entry.inode = free_ino;
+    test_entry.inode = free_ino + 1;
     test_entry.rec_len = EXT2_DIR_REC_LEN(name_len);
     test_entry.name_len = name_len;
     test_entry.file_type = EXT2_FT_REG_FILE;
     memcpy(&test_entry.name, name, name_len);
+
+    struct ext2_inode* boot_inode = findInode("/boot", inode_table);
+    struct ext2_dir_entry_2 *last_entry = findLastEntry(boot_inode);
+    if (last_entry != NULL) {
+        // dumpEntry(*last_entry);
+        __u32 real_len = EXT2_DIR_REC_LEN(last_entry->name_len);
+        __u32 last_len = last_entry->rec_len - real_len;
+        if (last_len > test_entry.rec_len) {
+            last_entry->rec_len = real_len;
+            test_entry.rec_len = last_len;
+        }
+    }
     dumpEntry(test_entry);
 
     struct ext2_inode *test_inode = &inode_table[free_ino];
@@ -167,6 +180,32 @@ __u32 readFile(struct ext2_inode *inode, __u8 *buf, __u32 offset, __u32 size) {
     }
 
     return size;
+}
+struct ext2_dir_entry_2* findLastEntry(struct ext2_inode* inode) {
+    if (inode == NULL) {
+        return NULL;
+    }
+
+    char buf[BLOCK_SIZE];
+    int bytes = inode->i_size;
+    struct ext2_dir_entry_2 *entry;
+
+    for (int bx = 0; bx < inode->i_blocks * 512 / BLOCK_SIZE; bx++) {
+        fseek(fp, inode->i_block[bx]*BLOCK_SIZE, 0);
+        fread(buf, sizeof(buf), 1, fp);
+
+        __u8 *pos = (__u8*) buf;
+        while (bytes > 0) {
+            entry = (struct ext2_dir_entry_2*) pos;
+            dumpEntry(*entry);
+
+            if (entry->rec_len <= 0) break;
+
+            pos += entry->rec_len;
+            bytes -= entry->rec_len;
+        }
+    }
+    return entry;
 }
 
 struct ext2_inode* findInode(char *path,  struct ext2_inode *table) {

@@ -1,8 +1,10 @@
 #include<stdio.h>
 #include<time.h>
-#include "../boot/ext2_fs.h"
 #include <math.h>
 #include <string.h>
+#include "../boot/ext2_fs.h"
+#include "../kernel/types.h"
+#include "../kernel/elf.h"
 
 #define BOOT_SIZE 1024
 #define INODE_SIZE 128
@@ -15,6 +17,8 @@ struct ext2_group_desc ext2_gd;
 struct ext2_inode inode_table[INODE_SIZE];
 struct ext2_dir_entry_2 ext2_entry[ENTRY_SIZE];
 
+uint8_t kernel[4096];
+
 char* timeToString(__u32 tm, char *buf, int size);
 
 void dumpUUID(const char*, __u8*);
@@ -23,6 +27,7 @@ void dumpGroupDesc(struct ext2_group_desc);
 void dumpInode(int inode, struct ext2_inode);
 void dumpEntry(struct ext2_dir_entry_2);
 void dumpBitmap(char *title, __u8 *bitmap, __u32 length);
+void dumpELF(struct elfhdr *hdr);
 
 struct ext2_inode* findInode(char*, struct ext2_inode *);
 struct ext2_dir_entry_2* findLastEntry(struct ext2_inode*);
@@ -60,10 +65,13 @@ void read_ext2() {
     if (inode != NULL) {
         __u8 buf[inode->i_size];
         __u32 n = readFile(inode, buf, 0, 36);
-        for (__u32 i = 0; i < n; i++) {
-            printf("%c", buf[i]);
-        }
-        printf("\n");
+        struct elfhdr *elf = (struct elfhdr*)buf;
+        dumpELF(elf);
+
+	fclose(fp);
+	return;
+    } else {
+        printf("error: not found.\n");
     }
 
     // block bitmap
@@ -128,6 +136,30 @@ void read_ext2() {
     fclose(fp);
 }
 
+void dumpELF(struct elfhdr *hdr) {
+    printf("-------------------------------------------------\n");
+    printf("                    ELF Header\n");
+    printf("-------------------------------------------------\n");
+
+    printf("magic: %x\n", hdr->magic);
+    printf("elf: %d\n", *hdr->elf);
+    printf("type: %d\n", hdr->type);
+    printf("machine: %d\n", hdr->machine);
+    printf("version: %d\n", hdr->version);
+    printf("entry: %x\n", hdr->entry);
+    printf("phoff: %x\n", hdr->phoff);
+    printf("shoff: %x\n", hdr->shoff);
+    printf("flages: %x\n", hdr->flags);
+    printf("ehsize: %d\n", hdr->ehsize);
+    printf("phentsize: %d\n", hdr->phentsize);
+    printf("phnum: %d\n", hdr->phnum);
+    printf("shentsize: %d\n", hdr->shentsize);
+    printf("shnum: %d\n", hdr->shnum);
+    printf("shstrndx: %d\n", hdr->shstrndx);
+    printf("-------------------------------------------------\n");
+
+}
+
 void dumpBitmap(char *title, __u8 *bitmap, __u32 length) {
     printf("-------------------------------------------------\n");
     printf("                  %s\n", title);
@@ -181,6 +213,7 @@ __u32 readFile(struct ext2_inode *inode, __u8 *buf, __u32 offset, __u32 size) {
 
     return size;
 }
+
 struct ext2_dir_entry_2* findLastEntry(struct ext2_inode* inode) {
     if (inode == NULL) {
         return NULL;

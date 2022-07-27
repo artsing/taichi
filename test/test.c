@@ -65,12 +65,15 @@ void read_ext2() {
     struct ext2_inode* inode = findInode("/boot/kernel", inode_table);
     if (inode != NULL) {
         __u8 buf[inode->i_size];
-        __u32 n = readFile(inode, buf, 0, 36);
+        __u32 n = readFile(inode, buf, 0, inode->i_size);
         struct elfhdr *elf = (struct elfhdr*)buf;
         dumpELF(elf);
 
         struct proghdr *ph = (struct proghdr*)((uchar*)elf + elf->phoff);
-        dumpProghdr(ph);
+        struct proghdr *eph = ph + elf->phnum;
+        for (; ph < eph; ph++) {
+            dumpProghdr(ph);
+        }
 
         fclose(fp);
         return;
@@ -147,8 +150,8 @@ void dumpProghdr(struct proghdr *hdr) {
 
     printf("type: %d\n", hdr->type);
     printf("off: %d\n", hdr->off);
-    printf("vaddr: %d\n", hdr->vaddr);
-    printf("paddr: %d\n", hdr->paddr);
+    printf("vaddr: 0x%x\n", hdr->vaddr);
+    printf("paddr: 0x%x\n", hdr->paddr);
     printf("filesz: %d\n", hdr->filesz);
     printf("memsz: %d\n", hdr->memsz);
     printf("flags: %d\n", hdr->flags);
@@ -169,9 +172,9 @@ void dumpELF(struct elfhdr *hdr) {
     printf("machine: %d\n", hdr->machine);
     printf("version: %d\n", hdr->version);
     printf("entry: %x\n", hdr->entry);
-    printf("phoff: %x\n", hdr->phoff);
-    printf("shoff: %x\n", hdr->shoff);
-    printf("flages: %x\n", hdr->flags);
+    printf("phoff: 0x%x\n", hdr->phoff);
+    printf("shoff: %d\n", hdr->shoff);
+    printf("flages: %d\n", hdr->flags);
     printf("ehsize: %d\n", hdr->ehsize);
     printf("phentsize: %d\n", hdr->phentsize);
     printf("phnum: %d\n", hdr->phnum);

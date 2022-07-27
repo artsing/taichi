@@ -28,6 +28,7 @@ void dumpInode(int inode, struct ext2_inode);
 void dumpEntry(struct ext2_dir_entry_2);
 void dumpBitmap(char *title, __u8 *bitmap, __u32 length);
 void dumpELF(struct elfhdr *hdr);
+void dumpProghdr(struct proghdr *pro);
 
 struct ext2_inode* findInode(char*, struct ext2_inode *);
 struct ext2_dir_entry_2* findLastEntry(struct ext2_inode*);
@@ -68,8 +69,11 @@ void read_ext2() {
         struct elfhdr *elf = (struct elfhdr*)buf;
         dumpELF(elf);
 
-	fclose(fp);
-	return;
+        struct proghdr *ph = (struct proghdr*)((uchar*)elf + elf->phoff);
+        dumpProghdr(ph);
+
+        fclose(fp);
+        return;
     } else {
         printf("error: not found.\n");
     }
@@ -136,12 +140,30 @@ void read_ext2() {
     fclose(fp);
 }
 
+void dumpProghdr(struct proghdr *hdr) {
+    printf("-------------------------------------------------\n");
+    printf("                    Program Header\n");
+    printf("-------------------------------------------------\n");
+
+    printf("type: %d\n", hdr->type);
+    printf("off: %d\n", hdr->off);
+    printf("vaddr: %d\n", hdr->vaddr);
+    printf("paddr: %d\n", hdr->paddr);
+    printf("filesz: %d\n", hdr->filesz);
+    printf("memsz: %d\n", hdr->memsz);
+    printf("flags: %d\n", hdr->flags);
+    printf("align: %d\n", hdr->align);
+
+    printf("-------------------------------------------------\n");
+}
+
+
 void dumpELF(struct elfhdr *hdr) {
     printf("-------------------------------------------------\n");
     printf("                    ELF Header\n");
     printf("-------------------------------------------------\n");
 
-    printf("magic: %x\n", hdr->magic);
+    printf("magic: %X\n", hdr->magic);
     printf("elf: %d\n", *hdr->elf);
     printf("type: %d\n", hdr->type);
     printf("machine: %d\n", hdr->machine);

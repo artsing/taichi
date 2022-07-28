@@ -74,9 +74,6 @@ void read_ext2() {
         for (; ph < eph; ph++) {
             dumpProghdr(ph);
         }
-
-        fclose(fp);
-        return;
     } else {
         printf("error: not found.\n");
     }

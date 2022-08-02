@@ -2,7 +2,7 @@
 #include<time.h>
 #include <math.h>
 #include <string.h>
-#include "../boot/ext2_fs.h"
+#include "../kernel/ext2_fs.h"
 #include "../kernel/types.h"
 #include "../kernel/elf.h"
 

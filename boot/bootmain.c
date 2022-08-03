@@ -1,5 +1,5 @@
-#include "kernel/ext2_types.h"
-#include "kernel/ext2_fs.h"
+// #include "kernel/ext2_types.h"
+// #include "kernel/ext2_fs.h"
 
 #include "kernel/types.h"
 #include "kernel/elf.h"
@@ -75,19 +75,20 @@ readsect(void *dst, uint offset)
 void
 readseg(uchar* pa, uint count, uint offset)
 {
-  uchar* epa;
+    uchar* epa;
 
-  epa = pa + count;
+    epa = pa + count;
 
-  // Round down to sector boundary.
-  pa -= offset % SECTSIZE;
+    // Round down to sector boundary.
+    pa -= offset % SECTSIZE;
 
-  // Translate from bytes to sectors; kernel starts at sector 1.
-  offset = (offset / SECTSIZE) + 1;
+    // Translate from bytes to sectors; kernel starts at sector 1.
+    offset = (offset / SECTSIZE) + 1;
 
-  // If this is too slow, we could read lots of sectors at a time.
-  // We'd write more to memory than asked, but it doesn't matter --
-  // we load in increasing order.
-  for(; pa < epa; pa += SECTSIZE, offset++)
-    readsect(pa, offset);
+    // If this is too slow, we could read lots of sectors at a time.
+    // We'd write more to memory than asked, but it doesn't matter --
+    // we load in increasing order.
+    for(; pa < epa; pa += SECTSIZE, offset++) {
+        readsect(pa, offset);
+    }
 }

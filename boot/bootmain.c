@@ -1,5 +1,5 @@
-// #include "kernel/ext2_types.h"
-// #include "kernel/ext2_fs.h"
+#include "kernel/ext2_types.h"
+#include "kernel/ext2_fs.h"
 
 #include "kernel/types.h"
 #include "kernel/elf.h"
@@ -10,70 +10,69 @@
 
 void readseg(uchar*, uint, uint);
 
-
 void
 bootmain(void)
 {
-  struct elfhdr *elf;
-  struct proghdr *ph, *eph;
-  void (*entry)(void);
-  uchar* pa;
+    struct elfhdr *elf;
+    struct proghdr *ph, *eph;
+    void (*entry)(void);
+    uchar* pa;
 
-  elf = (struct elfhdr*)0x10000;  // scratch space
+    elf = (struct elfhdr*)0x10000;  // scratch space
 
-  // Read 1st page off disk
-  readseg((uchar*)elf, 4096, 0);
+    // read super block
+    readseg((uchar *)elf, sizeof(struct ext2_super_block), 1024 - 1);
 
-  // Is this an ELF executable?
-  if(elf->magic != ELF_MAGIC)
-    return;  // let bootasm.S handle error
+    // Read 1st page off disk
+    readseg((uchar*)elf, 4096, 0);
 
-  // Load each program segment (ignores ph flags).
-  ph = (struct proghdr*)((uchar*)elf + elf->phoff);
-  eph = ph + elf->phnum;
-  for(; ph < eph; ph++){
-    pa = (uchar*)ph->paddr;
-    readseg(pa, ph->filesz, ph->off);
-    if(ph->memsz > ph->filesz)
-      stosb(pa + ph->filesz, 0, ph->memsz - ph->filesz);
-  }
+    // Is this an ELF executable?
+    if (elf->magic != ELF_MAGIC) {
+        return;  // let bootasm.S handle error
+    }
 
-  // Call the entry point from the ELF header.
-  // Does not return!
-  entry = (void(*)(void))(elf->entry);
-  entry();
+    // Load each program segment (ignores ph flags).
+    ph = (struct proghdr*)((uchar*)elf + elf->phoff);
+    eph = ph + elf->phnum;
+    for (; ph < eph; ph++){
+        pa = (uchar*)ph->paddr;
+        readseg(pa, ph->filesz, ph->off);
+        if(ph->memsz > ph->filesz)
+        stosb(pa + ph->filesz, 0, ph->memsz - ph->filesz);
+    }
+
+    // Call the entry point from the ELF header.
+    // Does not return!
+    entry = (void(*)(void))(elf->entry);
+    entry();
 }
 
-void
-waitdisk(void)
+void waitdisk(void)
 {
-  // Wait for disk ready.
-  while((inb(0x1F7) & 0xC0) != 0x40)
-    ;
+    // Wait for disk ready.
+    while((inb(0x1F7) & 0xC0) != 0x40);
 }
 
 // Read a single sector at offset into dst.
-void
-readsect(void *dst, uint offset)
+void readsect(void *dst, uint offset)
 {
-  // Issue command.
-  waitdisk();
-  outb(0x1F2, 1);   // count = 1
-  outb(0x1F3, offset);
-  outb(0x1F4, offset >> 8);
-  outb(0x1F5, offset >> 16);
-  outb(0x1F6, (offset >> 24) | 0xE0);
-  outb(0x1F7, 0x20);  // cmd 0x20 - read sectors
+    // Issue command.
+    waitdisk();
+    outb(0x1F2, 1);   // count = 1
+    outb(0x1F3, offset);
+    outb(0x1F4, offset >> 8);
+    outb(0x1F5, offset >> 16);
+    outb(0x1F6, (offset >> 24) | 0xE0);
+    outb(0x1F7, 0x20);  // cmd 0x20 - read sectors
 
-  // Read data.
-  waitdisk();
-  insl(0x1F0, dst, SECTSIZE/4);
+    // Read data.
+    waitdisk();
+    insl(0x1F0, dst, SECTSIZE/4);
 }
 
 // Read 'count' bytes at 'offset' from kernel into physical address 'pa'.
 // Might copy more than asked.
-void
-readseg(uchar* pa, uint count, uint offset)
+void readseg(uchar* pa, uint count, uint offset)
 {
     uchar* epa;
 

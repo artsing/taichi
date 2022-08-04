@@ -52,7 +52,6 @@ void read_ext2() {
     fread(&ext2_sb, sizeof(struct ext2_super_block), 1, fp);
     dumpSuperBlock(ext2_sb);
 
-
     // group desc
     fread(&ext2_gd, sizeof(struct ext2_group_desc), 1, fp);
     dumpGroupDesc(ext2_gd);

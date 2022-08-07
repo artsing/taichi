@@ -59,6 +59,19 @@ xv6.img: build/bootblock test/kernel
 	dd if=$< of=$@ conv=notrunc
 	dd if=test/kernel of=$@ seek=1 conv=notrunc
 
+EFI_CFLAGS=-fno-stack-protector -fpic -DEFI_PLATFORM -ffreestanding -fshort-wchar -I /usr/include/efi -mno-red-zone
+EFI_SECTIONS=-j .text -j .sdata -j .data -j .dynamic -j .dynsym -j .rel -j .rela -j .reloc
+EFI_LINK=/usr/lib/crt0-efi-x86_64.o -nostdlib -znocombreloc -T /usr/lib/elf_x86_64_efi.lds -shared -Bsymbolic -L /usr/lib -lefi -lgnuefi 
+
+boot/efi.o: boot/efi.c
+	$(CC) ${EFI_CFLAGS} -I /usr/include/efi/x86_64 -DEFI_FUNCTION_WRAPPER -c -o $@ $<
+
+boot/efi64.so: boot/efi.o
+	$(LD) boot/efi.o ${EFI_LINK} -o $@
+
+boot/bootx64.efi: boot/efi64.so
+	objcopy ${EFI_SECTIONS} --target=efi-app-x86_64 $< $@
+
 ifndef CPUS
 CPUS := 2
 endif
@@ -79,3 +92,4 @@ git-push:
 .PHONY: clean
 clean:
 	rm -vrf ./build/*
+	rm boot/efi.o boot/efi64.so boot/bootx64.efi

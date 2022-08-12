@@ -53,8 +53,7 @@ bootblock: boot/bootasm.S boot/bootmain.c
 	$(OBJCOPY) -S -O binary -j .text build/bootblock.o build/bootblock
 	./tools/sign.pl build/bootblock
 
-
-xv6.img: build/bootblock test/kernel
+build/xv6.img: build/bootblock test/kernel
 	dd if=/dev/zero of=$@ count=10000
 	dd if=$< of=$@ conv=notrunc
 	dd if=test/kernel of=$@ seek=1 conv=notrunc
@@ -63,13 +62,13 @@ EFI_CFLAGS=-fno-stack-protector -fpic -DEFI_PLATFORM -ffreestanding -fshort-wcha
 EFI_SECTIONS=-j .text -j .sdata -j .data -j .dynamic -j .dynsym -j .rel -j .rela -j .reloc
 EFI_LINK=/usr/lib/crt0-efi-x86_64.o -nostdlib -znocombreloc -T /usr/lib/elf_x86_64_efi.lds -shared -Bsymbolic -L /usr/lib -lefi -lgnuefi 
 
-boot/efi.o: boot/efi.c
+build/efi.o: boot/efi.c
 	$(CC) ${EFI_CFLAGS} -I /usr/include/efi/x86_64 -DEFI_FUNCTION_WRAPPER -c -o $@ $<
 
-boot/efi64.so: boot/efi.o
+build/efi64.so: boot/efi.o
 	$(LD) boot/efi.o ${EFI_LINK} -o $@
 
-boot/bootx64.efi: boot/efi64.so
+build/bootx64.efi: boot/efi64.so
 	objcopy ${EFI_SECTIONS} --target=efi-app-x86_64 $< $@
 
 ifndef CPUS
@@ -83,6 +82,33 @@ QEMUNET = -netdev user,id=n1,hostfwd=udp::10007-:7,hostfwd=tcp::10007-:7 -device
 qemu: build/fs.img build/xv6.img
 	$(QEMU) -nographic $(QEMUOPTS)
 
+qemu-efi: build/bootx64.efi build/hda.img
+	qemu-system-x86_64 -bios "/usr/share/ovmf/OVMF.fd" -net none -hda build/hda.img
+
+build/hda.img: tools/gdisk.cfg
+	@mkdir -p build/mnt
+	sudo dd if=/dev/zero of=$@ bs=512 count=93750
+	sudo gdisk $@ < tools/gdisk.cfg
+	sudo losetup --offset 1048576 --sizelimit 46934528 /dev/loop20 build/hda.img
+	sudo mkfs -t vfat -F 32 /dev/loop20
+	sudo mount /dev/loop20 build/mnt
+	sudo mkdir -p build/mnt/EFI/BOOT
+	sudo cp boot/bootx64.efi build/mnt/EFI/BOOT/BOOTx64.EFI
+	sudo umount build/mnt
+	sudo losetup -d /dev/loop20
+
+mount: boot/bootx64.efi
+	sudo losetup --offset 1048576 --sizelimit 46934528 /dev/loop20 build/hda.img
+	sudo mount /dev/loop20 build/mnt
+
+umount:
+	sudo umount build/mnt
+	sudo losetup -d /dev/loop20
+
+build/hda.vmdk: build/hda.img
+	qemu-img convert $< -f raw -O vmdk $@
+
+
 echo:
 	@echo $(CFLAGS)
 
@@ -92,4 +118,3 @@ git-push:
 .PHONY: clean
 clean:
 	rm -vrf ./build/*
-	rm boot/efi.o boot/efi64.so boot/bootx64.efi

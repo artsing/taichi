@@ -1,1 +1,0 @@
-qemu-system-x86_64 -bios OVMF.fd -M "pc" -m 256 -cpu "qemu64" -vga cirrus -serial vc -parallel vc -name "UEFI" -boot order=dc -drive file=./main.img,if=ide -debugcon file:uefi_debug.log -global isa-debugcon.iobase=0x402 

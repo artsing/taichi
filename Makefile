@@ -65,10 +65,10 @@ EFI_LINK=/usr/lib/crt0-efi-x86_64.o -nostdlib -znocombreloc -T /usr/lib/elf_x86_
 build/efi.o: boot/efi.c
 	$(CC) ${EFI_CFLAGS} -I /usr/include/efi/x86_64 -DEFI_FUNCTION_WRAPPER -c -o $@ $<
 
-build/efi64.so: boot/efi.o
-	$(LD) boot/efi.o ${EFI_LINK} -o $@
+build/efi64.so: build/efi.o
+	$(LD) $< ${EFI_LINK} -o $@
 
-build/bootx64.efi: boot/efi64.so
+build/bootx64.efi: build/efi64.so
 	objcopy ${EFI_SECTIONS} --target=efi-app-x86_64 $< $@
 
 ifndef CPUS
@@ -85,7 +85,7 @@ qemu: build/fs.img build/xv6.img
 qemu-efi: build/bootx64.efi build/hda.img
 	qemu-system-x86_64 -bios "/usr/share/ovmf/OVMF.fd" -net none -hda build/hda.img
 
-build/hda.img: tools/gdisk.cfg
+build/hda.img: tools/gdisk.cfg build/bootx64.efi
 	@mkdir -p build/mnt
 	sudo dd if=/dev/zero of=$@ bs=512 count=93750
 	sudo gdisk $@ < tools/gdisk.cfg
@@ -93,7 +93,7 @@ build/hda.img: tools/gdisk.cfg
 	sudo mkfs -t vfat -F 32 /dev/loop20
 	sudo mount /dev/loop20 build/mnt
 	sudo mkdir -p build/mnt/EFI/BOOT
-	sudo cp boot/bootx64.efi build/mnt/EFI/BOOT/BOOTx64.EFI
+	sudo cp build/bootx64.efi build/mnt/EFI/BOOT/BOOTx64.EFI
 	sudo umount build/mnt
 	sudo losetup -d /dev/loop20
 

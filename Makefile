@@ -82,7 +82,7 @@ QEMUNET = -netdev user,id=n1,hostfwd=udp::10007-:7,hostfwd=tcp::10007-:7 -device
 qemu: build/fs.img build/xv6.img
 	$(QEMU) -nographic $(QEMUOPTS)
 
-qemu-efi: build/bootx64.efi build/hda.img
+boot: build/bootx64.efi build/hda.img
 	qemu-system-x86_64 -bios "/usr/share/ovmf/OVMF.fd" -net none -hda build/hda.img
 
 build/hda.img: tools/gdisk.cfg build/bootx64.efi

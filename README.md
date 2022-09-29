@@ -1,4 +1,4 @@
-## Pangu OS
+## Taichi OS
   unix-link operating system
   
 ## Build and Run

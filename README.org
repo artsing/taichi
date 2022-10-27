@@ -1,4 +1,4 @@
-* pangu
+* Taichi OS
     unix-link operating system based on xv6 .
     
 ** run
